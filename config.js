@@ -40,7 +40,6 @@ module.exports = {
             IMPORT_BUDGETS_URL: "https://developer.api.autodesk.com/cost/v1/containers/{0}/budgets:import",
             BUDGETS_RUL: "https://developer.api.autodesk.com/cost/v1/containers/{0}/budgets" 
         }
-
     },
     designAutomation:{
         webhook_url: process.env.APP_DOMAIN_URL + process.env.FORGE_WEBHOOK_ENDPOINT,

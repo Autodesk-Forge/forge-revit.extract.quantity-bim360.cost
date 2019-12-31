@@ -120,16 +120,25 @@ function prepareUserHubsTree() {
       "plugins": ["types", "state", "sort"],
       "state": { "key": "sourceHubs" }// key restore tree state
   }).bind("activate_node.jstree", function (evt, data) {
-      if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {
-          // in case the node.id contains a | then split into URN & viewableId
-          if (data.node.id.indexOf('|') > -1) {
-              var urn = data.node.id.split('|')[1];
-              var viewableId = data.node.id.split('|')[2];
-              launchViewer(urn, viewableId);
+      if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {        
+        const instanceTree = $('#sourceHubs').jstree(true);
+        for (const parentNode in data.node.parents) {
+          const currentNode = instanceTree.get_node(data.node.parents[parentNode]);
+          if (currentNode.type === "bim360projects") {
+            $('#labelProjectHref').text(currentNode.id);
+            $('#labelCostContainer').text(currentNode.original.cost_container);
+            break;
           }
-          else {
-              launchViewer(data.node.id);
-          }
+        }
+        // in case the node.id contains a | then split into URN & viewableId
+        if (data.node.id.indexOf('|') > -1) {
+          var urn = data.node.id.split('|')[1];
+          var viewableId = data.node.id.split('|')[2];
+          launchViewer(urn, viewableId);
+        }
+        else {
+          launchViewer(data.node.id);
+        }
       }
   });
 }

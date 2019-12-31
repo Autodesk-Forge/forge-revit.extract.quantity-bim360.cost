@@ -108,6 +108,7 @@ async function getHubs(oauthClient, credentials, res) {
                 hub.links.self.href,
                 hub.attributes.name,
                 hubType,
+                null,
                 true
             );
         }else
@@ -134,6 +135,7 @@ async function getProjects(hubId, oauthClient, credentials, res) {
             project.links.self.href,
             project.attributes.name,
             projectType,
+            project.relationships.cost.data.id,
             true
         );
     }));
@@ -147,6 +149,7 @@ async function getFolders(hubId, projectId, oauthClient, credentials, res) {
             item.links.self.href,
             item.attributes.displayName === null ? item.attributes.name : item.attributes.displayName,
             item.type,
+            null,
             true
         );
     }));
@@ -162,6 +165,7 @@ async function getFolderContents(projectId, folderId, oauthClient, credentials, 
                 item.links.self.href,
                 name,
                 item.type,
+                null,
                 true
             );
         } else {
@@ -183,6 +187,7 @@ async function getVersions(projectId, itemId, oauthClient, credentials, res) {
             viewerUrn,
             decodeURI('v' + versionst + ': ' + dateFormated + ' by ' + version.attributes.lastModifiedUserName),
             (viewerUrn !== null ? 'versions' : 'unsupported'),
+            null,
             false,
             versionStorage
         );
@@ -190,8 +195,8 @@ async function getVersions(projectId, itemId, oauthClient, credentials, res) {
 }
 
 // Format data for tree
-function createTreeNode(_id, _text, _type, _children, _storage = null) {
-    return { id: _id, text: _text, type: _type, children: _children, storage: _storage };
+function createTreeNode(_id, _text, _type, _cost_container, _children, _storage = null) {
+    return { id: _id, text: _text, type: _type, cost_container: _cost_container, children: _children, storage: _storage };
 }
 
 module.exports = {

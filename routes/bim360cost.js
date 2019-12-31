@@ -33,7 +33,8 @@ let router = express.Router();
 // / Import budgets to BIM360 Cost module
 // /////////////////////////////////////////////////////////////////////
 router.post('/da4revit/v1/bim360/budgets', async (req, res, next) => {
-    const budgetList  = req.body; // input Url of Excel file
+    const cost_container_id = req.body.cost_container_id;
+    const budgetList  = req.body.data; // input Url of Excel file
     if ( budgetList === '' ) {
         res.status(400).end('Missing input body');
         return;
@@ -42,7 +43,7 @@ router.post('/da4revit/v1/bim360/budgets', async (req, res, next) => {
         const oauth = new OAuth(req.session);
         const internalToken = await oauth.getInternalToken();
 
-        const importBudgetsUrl =  bim360Cost.URL.IMPORT_BUDGETS_URL.format('de605561-7ad8-11e8-9d12-afb30ac3c34f');
+        const importBudgetsUrl =  bim360Cost.URL.IMPORT_BUDGETS_URL.format(cost_container_id);
 
         const budgetsRes = await apiClientCallAsync( 'POST',  importBudgetsUrl, internalToken.access_token, budgetList);
         res.status(200).end(JSON.stringify(budgetsRes.body));
@@ -55,10 +56,10 @@ router.post('/da4revit/v1/bim360/budgets', async (req, res, next) => {
 // /////////////////////////////////////////////////////////////////////
 // / Import budgets to BIM360 Cost module
 // /////////////////////////////////////////////////////////////////////
-router.get('/bim360/v1/projects/:project_id/budgets', async (req, res, next) => {
+router.get('/bim360/v1/projects/:cost_container_id/budgets', async (req, res, next) => {
 
-    const project_id = req.params.project_id;
-    if ( project_id === '' ) {
+    const cost_container_id = req.params.cost_container_id;
+    if ( cost_container_id === '' ) {
         res.status(400).end('Missing input project id');
         return;
     }
@@ -67,7 +68,7 @@ router.get('/bim360/v1/projects/:project_id/budgets', async (req, res, next) => 
         const oauth = new OAuth(req.session);
         const internalToken = await oauth.getInternalToken();
 
-        const budgetsUrl =  bim360Cost.URL.BUDGETS_RUL.format('de605561-7ad8-11e8-9d12-afb30ac3c34f');
+        const budgetsUrl =  bim360Cost.URL.BUDGETS_RUL.format(cost_container_id);
 
         const budgetsRes = await apiClientCallAsync( 'GET',  budgetsUrl, internalToken.access_token);
         res.status(200).end(JSON.stringify(budgetsRes.body.results));
