@@ -15,22 +15,16 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+'use strict';   
 
 const express = require('express');
-const fs = require('fs');
-const { designAutomation }= require('../config');
+const _fs = require('fs');
+const _path = require('path');
 
 const { OAuth } = require('./common/oauthImp');
-
-const{
-    uploadAppBundleAsync,
-    apiClientCallAsync    
-} = require ('./common/daconfigureImp')
+const{ Utils }  = require ('./common/da4rimp')
 
 let router = express.Router();
-
-const APP_BUNDLE_FOLDER= './public/bundles/';
-
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -48,15 +42,20 @@ router.use(async (req, res, next) => {
 /// Query the list of the engines
 ///////////////////////////////////////////////////////////////////////
 router.get('/designautomation/engines', async(req, res, next) => {
+    const api = Utils.dav3API(req.oauth_token);
+    let engines = null;
     try {
-        let workitemRes = await apiClientCallAsync( 'GET',  designAutomation.URL.GET_ENGINES_URL, req.oauth_token.access_token);
-        const engineList = workitemRes.body.data.filter( (engine ) => {
-            return (engine.indexOf('Revit') >= 0)
-        })
-        res.status(200).end(JSON.stringify(engineList));
-    } catch (err) {
-        res.status(500).end("error");
+        engines = await api.getEngines();
+    } catch (ex) {
+        console.error(ex);
+        return res.status(500).json({
+            diagnostic: 'Failed to get engine list'
+        });
     }
+    const engineList = engines.data.filter((engine) => {
+        return (engine.indexOf('Revit') >= 0)
+    })
+    return (res.status(200).json(engineList.sort())); // return list of engines
 })
 
 
@@ -64,27 +63,42 @@ router.get('/designautomation/engines', async(req, res, next) => {
 /// Query the list of the activities
 ///////////////////////////////////////////////////////////////////////
 router.get('/designautomation/activities', async(req, res, next) => {
-    try {
-        const activitiesRes = await apiClientCallAsync( 'GET',  designAutomation.URL.ACTIVITIES_URL, req.oauth_token.access_token);
-        res.status(200).end(JSON.stringify(activitiesRes.body.data));
-    } catch (err) {
-        res.status(500).end("error");
-    }
+	const api = Utils.dav3API(req.oauth_token);
+	// filter list of 
+	let activities = null;
+	try {
+		activities = await api.getActivities();
+	} catch (ex) {
+		console.error(ex);
+		return (res.status(500).json({
+			diagnostic: 'Failed to get activity list'
+		}));
+	}
+	let definedActivities = [];
+	for (let i = 0; i < activities.data.length; i++) {
+		let activity = activities.data[i];
+		if (activity.startsWith(Utils.NickName) && activity.indexOf('$LATEST') === -1)
+			definedActivities.push(activity.replace(Utils.NickName + '.', ''));
+	}
+	return(res.status(200).json(definedActivities));
 })
 
 
 ///////////////////////////////////////////////////////////////////////
 /// Query the list of the appbundle packages
 ///////////////////////////////////////////////////////////////////////
-router.get('/appbundles', async(req, res, next) => {
+router.get('/appbundles', async (req, res, next) => {
     try {
-        const fileArray = fs.readdirSync(APP_BUNDLE_FOLDER);
-        const zipFile = fileArray.filter( fileName => {
+        const fileArray = _fs.readdirSync(Utils.LocalBundlesFolder);
+        const zipFile = fileArray.filter(fileName => {
             return (fileName.indexOf('.zip') >= 0)
-        })    
-        res.status(200).end(JSON.stringify(zipFile));
+        })
+        res.status(200).json(zipFile);
     } catch (err) {
-        res.status(500).end("Failed to find appbundle package");
+        console.error(err);
+        res.status(500).json({
+            diagnostic: 'Failed to find appbundle list'
+        });
     }
 })
 
@@ -99,80 +113,98 @@ router.post('/designautomation/appbundles', async( req, res, next) => {
     const appBundleName = fileName + 'AppBundle';
 
     // check if ZIP with bundle is existing
-    const localAppPath = APP_BUNDLE_FOLDER + zipFileName;
-    if (!fs.existsSync(localAppPath)) {
-        res.status(400).end(localAppPath + " is not existing");
-        return;
+	const localAppPath = _path.join(Utils.LocalBundlesFolder, zipFileName);
+    if (!_fs.existsSync(localAppPath)) {
+        console.error(`${localAppPath} is not existing`);
+        return (res.status(400).json({ 
+            diagnostic: `${localAppPath} is not existing`
+        }));
     }
 
-    // get defined app bundles
-    let appBundles = null;    
-    try {
-        const appBundlesRes = await apiClientCallAsync( 'GET', designAutomation.URL.APPBUNDLES_URL, req.oauth_token.access_token);
-        if( appBundlesRes.body && appBundlesRes.body.data ){
-            appBundles = appBundlesRes.body.data;
-        }
-    } catch (err) {
-        console.log("Failed to get the AppBundles");
-        res.status(400).end("Failed to get the AppBundles");
-        return;
+    const api = Utils.dav3API(req.oauth_token);
+	let appBundles = null;
+	try {
+		appBundles = await api.getAppBundles();
+	} catch (ex) {
+		console.error(ex);
+		return (res.status(500).json({
+			diagnostic: 'Failed to get the Bundle list'
+		}));
     }
-
-    const qualifiedAppBundleId = designAutomation.nickname + '.' + appBundleName + '+' + designAutomation.appbundle_activity_alias;
+    
+	const qualifiedAppBundleId = `${Utils.NickName}.${appBundleName}+${Utils.Alias}`;
     var newAppVersion = null;
-    if( appBundles.includes( qualifiedAppBundleId ) ){
-        try{
-            const appBundleSpec = {
-                "Engine" : engineName,
-                "Description" : "Export Qto information from Revit",
-            }
-            const createAppVersionUrl =  designAutomation.URL.CREATE_APPBUNDLE_VERSION_URL.format(appBundleName);
-            newAppVersion = await apiClientCallAsync( 'POST', createAppVersionUrl, req.oauth_token.access_token, appBundleSpec );
-            const aliasSpec = {
-                "Version" : newAppVersion.body.version
-            }
-            const modifyAppAliasUrl = designAutomation.URL.UPDATE_APPBUNDLE_ALIAS_URL.format(appBundleName,designAutomation.appbundle_activity_alias);
-            await apiClientCallAsync( 'PATCH', modifyAppAliasUrl, req.oauth_token.access_token, aliasSpec );
+    if( appBundles.data.includes( qualifiedAppBundleId ) ){
+ 		// create new version
+         const appBundleSpec = {
+				engine: engineName,
+				description: appBundleName
+			};
+		try {
+			newAppVersion = await api.createAppBundleVersion(appBundleName, appBundleSpec);
+		} catch (ex) {
+			console.error(ex);
+			return (res.status(500).json({
+				diagnostic: 'Cannot create new version'
+			}));
+		}
+
+		// update alias pointing to v+1
+		const aliasSpec = {
+				version: newAppVersion.Version
+			};
+		try {
+			const newAlias = await api.modifyAppBundleAlias(appBundleName, Utils.Alias, aliasSpec);
+		} catch (ex) {
+			console.error(ex);
+			return (res.status(500).json({
+				diagnostic: 'Failed to create an alias'
+			}));
+		}   
+    } else {
+        const appBundleSpec = {
+            package: appBundleName,
+            engine: engineName,
+            id: appBundleName,
+            description: `Export Qto information from Revit`
+        };
+        try {
+            newAppVersion = await api.createAppBundle(appBundleSpec);
+        } catch (ex) {
+            console.error(ex);
+            return (res.status(500).json({
+                diagnostic: 'Failed to create new app'
+            }));
         }
-        catch( err ){
-            console.log(err);
-            res.status(400).end("Failed to Create AppBundle new version.");
-            return;
-        }
-    }else{
-        try{
-            const appBundleSpec = {
-                "Engine" : engineName,
-                "Id" : appBundleName,
-                "Description" : 'Export Qto information from Revit',
-            }
-            newAppVersion = await apiClientCallAsync( 'POST', designAutomation.URL.APPBUNDLES_URL, req.oauth_token.access_token, appBundleSpec );
-            const aliasSpec = {
-                "Id" : designAutomation.appbundle_activity_alias,
-                "Version" : 1
-            }
-            const createAppBundleAliasUrl = designAutomation.URL.CREATE_APPBUNDLE_ALIAS_URL.format(appBundleName);
-            await apiClientCallAsync( 'POST', createAppBundleAliasUrl, req.oauth_token.access_token, aliasSpec );
-        }
-        catch( err ){
-            console.log(err);
-            res.status(400).end("Failed to create new version of AppBundle.");
-            return;
+
+        // create alias pointing to v1
+        const aliasSpec = {
+            id: Utils.Alias,
+            version: 1
+        };
+        try {
+            const newAlias = await api.createAppBundleAlias(appBundleName, aliasSpec);
+        } catch (ex) {
+            console.error(ex);
+            return (res.status(500).json({
+                diagnostic: 'Failed to create an alias'
+            }));
         }
     }
-    const contents = fs.readFileSync(localAppPath);
+    const contents = _fs.readFileSync(localAppPath);
     try{
-        await uploadAppBundleAsync(newAppVersion.body.uploadParameters, contents);
-        const result = {
-            AppBundle : qualifiedAppBundleId,
-            Version   : newAppVersion.body.version
-        }
-        res.status(200).end(JSON.stringify(result));    
+        await Utils.uploadAppBundleAsync(newAppVersion.uploadParameters, contents);
     }catch(err){
-        console.log(err);
-        res.status(500).end("Failed to upload the package to the url.");
+        console.error(err);
+        return (res.status(500).json({
+            diagnostic: "Failed to upload the package to the url."
+        }));
     }
-    return;
+    const result = {
+        AppBundle : qualifiedAppBundleId,
+        Version   : newAppVersion.version
+    }
+    return (res.status(200).json( result ));    
 })
 
 
@@ -186,20 +218,19 @@ router.post('/designautomation/activities', async( req, res, next) => {
     const appBundleName = fileName + 'AppBundle';
     const activityName = fileName + 'Activity';
 
+    const api = Utils.dav3API(req.oauth_token);
     let activities = null;
-    try {
-        const activityRes = await apiClientCallAsync( 'GET',  designAutomation.URL.ACTIVITIES_URL, req.oauth_token.access_token);
-        if(activityRes.body && activityRes.body.data ){
-            activities = activityRes.body.data;
-        }
-    } catch (err) {
-        console.log(err);
-        res.status(400).end("Failed to get activities.");
-        return;
+    try{
+        activities = await api.getActivities();
+    }catch(ex){
+        console.error(ex);
+        return res.status(500).json({
+			diagnostic: 'Failed to get activity list'
+        });
     }
-    const qualifiedAppBundleId = designAutomation.nickname + '.' + appBundleName + '+' + designAutomation.appbundle_activity_alias;
-    const qualifiedActivityId  = designAutomation.nickname + '.' + activityName + '+' + designAutomation.appbundle_activity_alias;
-    if( !activities.includes( qualifiedActivityId ) ){
+    const qualifiedAppBundleId = `${Utils.NickName}.${appBundleName}+${Utils.Alias}`;
+	const qualifiedActivityId = `${Utils.NickName}.${activityName}+${Utils.Alias}`;
+    if( !activities.data.includes( qualifiedActivityId ) ){
         const activitySpec = {
             Id : activityName,
             Appbundles : [ qualifiedAppBundleId ],
@@ -209,7 +240,7 @@ router.post('/designautomation/activities', async( req, res, next) => {
             {
                 inputFile: {
                     verb: "get",
-                    description: "input file",
+                    description: "input revit file",
                     required: true
                 },
                 inputJson: {
@@ -217,16 +248,6 @@ router.post('/designautomation/activities', async( req, res, next) => {
                     description: "input Json parameters",
                     localName: "params.json"
                 },
-                // inputXls: {
-                //     verb: "get",
-                //     description: "input excel file",
-                //     localName: "input.xls"
-                // },
-                // outputRvt: {
-                //     verb: "put",
-                //     description: "output Rvt file",
-                //     localName: "result.rvt"
-                // },
                 outputJson: {
                     verb: "put",
                     description: "output qto file",
@@ -234,32 +255,37 @@ router.post('/designautomation/activities', async( req, res, next) => {
                 }
             }
         }
-        try{
-            newActivity = await apiClientCallAsync( 'POST',  designAutomation.URL.ACTIVITIES_URL, req.oauth_token.access_token, activitySpec );
-            const aliasSpec = {
-                "Id" : designAutomation.appbundle_activity_alias,
-                "Version" : 1
-            }
-            const createActivityAliasUrl = designAutomation.URL.CREATE_ACTIVITY_ALIAS.format(activityName);
-            await apiClientCallAsync( 'POST',  createActivityAliasUrl, req.oauth_token.access_token, aliasSpec );
-        }catch(err){
-            console.log(err);
-            res.status(400).end("Failed to create activity");
-            return; 
-        }
-        const activityRes = {
+		try {
+			const newActivity = await api.createActivity(activitySpec);
+		} catch (ex) {
+			console.error(ex);
+			return (res.status(500).json({
+				diagnostic: 'Failed to create new activity'
+			}));
+		}
+		// specify the alias for this Activity
+		const aliasSpec = {
+			id: Utils.Alias,
+			version: 1
+		};
+		try {
+			const newAlias = await api.createActivityAlias(activityName, aliasSpec);
+		} catch (ex) {
+			console.error(ex);
+			return (res.status(500).json({
+				diagnostic: 'Failed to create new alias for activity'
+			}));
+		}
+        return res.status(200).json({
             Activity : qualifiedActivityId,
             Status : "Created"
-        }
-        res.status(200).end(JSON.stringify(activityRes));
-        return;
+        });
     }
-    const activityRes = {
+    return res.status(200).json({
         Activity : qualifiedActivityId,
         Status : "Existing"
-    }
-    res.status(200).end(JSON.stringify(activityRes));
-    return;
+    });
+
 })
 
 
@@ -268,12 +294,16 @@ router.post('/designautomation/activities', async( req, res, next) => {
 ///////////////////////////////////////////////////////////////////////
 router.delete('/designautomation/appbundles/:appbundle_name', async(req, res, next) =>{
     const appbundle_name = req.params.appbundle_name;
-    try {
-        await apiClientCallAsync( 'DELETE',  designAutomation.URL.APPBUNDLE_URL.format(appbundle_name), req.oauth_token.access_token );
-        res.status(204).end("AppBundle is deleted");
-    } catch (err) {
-        res.status(500).end("Failed to delete AppBundle: " + appbundle_name);
+    const api = Utils.dav3API(req.oauth_token);
+    try{
+        await api.deleteAppBundle( appbundle_name );
+    }catch(ex){
+        console.error(ex);
+        return res.status(500).json({
+            diagnostic: 'Failed to delete the bundle'
+        });
     }
+    return res.status(204).end();
 })
 
 
@@ -283,12 +313,16 @@ router.delete('/designautomation/appbundles/:appbundle_name', async(req, res, ne
 ///////////////////////////////////////////////////////////////////////
 router.delete('/designautomation/activities/:activity_name', async(req, res, next) =>{
     const activity_name = req.params.activity_name;
-    try {
-        await apiClientCallAsync( 'DELETE',  designAutomation.URL.ACTIVITY_URL.format(activity_name), req.oauth_token.access_token );
-        res.status(204).end("Activity is deleted");
-    } catch (err) {
-        res.status(500).end("Failed to delete activity: " + activity_name );
+    const api = Utils.dav3API(req.oauth_token);
+    try{
+        await api.deleteActivity( activity_name );
+    }catch(ex){
+        console.error(ex);
+        return res.status(500).json({
+            diagnostic: 'Failed to delete the activity'
+        });
     }
+    return res.status(204).end();
 })
 
 module.exports = router;

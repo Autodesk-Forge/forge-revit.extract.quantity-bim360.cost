@@ -15,16 +15,12 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+'use strict';   
 
 const express = require('express');
 const { bim360Cost }= require('../config');
-
 const { OAuth } = require('./common/oauthImp');
-
-const { 
-    apiClientCallAsync
-} = require('./common/bim360costImp')
-
+const { apiClientCallAsync } = require('./common/apiclient');
 
 let router = express.Router();
 
@@ -42,9 +38,7 @@ router.post('/da4revit/v1/bim360/budgets', async (req, res, next) => {
     try {
         const oauth = new OAuth(req.session);
         const internalToken = await oauth.getInternalToken();
-
         const importBudgetsUrl =  bim360Cost.URL.IMPORT_BUDGETS_URL.format(cost_container_id);
-
         const budgetsRes = await apiClientCallAsync( 'POST',  importBudgetsUrl, internalToken.access_token, budgetList);
         res.status(200).end(JSON.stringify(budgetsRes.body));
     } catch (err) {
@@ -63,7 +57,6 @@ router.get('/bim360/v1/projects/:cost_container_id/budgets', async (req, res, ne
         res.status(400).end('Missing input project id');
         return;
     }
-
     try {
         const oauth = new OAuth(req.session);
         const internalToken = await oauth.getInternalToken();

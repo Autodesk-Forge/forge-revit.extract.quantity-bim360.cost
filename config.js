@@ -34,6 +34,18 @@ module.exports = {
         // Required scope for the client-side viewer
         public: ['viewables:read']
     },
+    client: {
+        circuitBreaker: {
+			threshold: 11,
+			interval: 1200
+		},
+		retry: {
+			maxNumberOfRetries: 7,
+			backoffDelay: 4000,
+			backoffPolicy: 'exponentialBackoffWithJitter'
+		},
+		requestTimeout: 25000
+    },
     bim360Cost:{
         URL:{
 
@@ -42,25 +54,7 @@ module.exports = {
         }
     },
     designAutomation:{
-        webhook_url: process.env.APP_DOMAIN_URL + process.env.FORGE_WEBHOOK_ENDPOINT,
-        upload_url:  process.env.APP_DOMAIN_URL + process.env.FORGE_FILE_UPLOAD_ENDPOINT,
-        endpoint: 'https://developer.api.autodesk.com/da/us-east/v3/',
+        app_base_domain: process.env.FORGE_WEBHOOK_URL,
         nickname:     process.env.DESIGN_AUTOMATION_NICKNAME,
-        activity_name: process.env.DESIGN_AUTOMATION_ACTIVITY_NAME,
-        appbundle_activity_alias: 'dev',
-
-        URL:{
-            GET_ENGINES_URL:    "https://developer.api.autodesk.com/da/us-east/v3/engines",
-            ACTIVITIES_URL:     "https://developer.api.autodesk.com/da/us-east/v3/activities",
-            ACTIVITY_URL:       "https://developer.api.autodesk.com/da/us-east/v3/activities/{0}",
-            APPBUNDLES_URL:     "https://developer.api.autodesk.com/da/us-east/v3/appbundles",
-            APPBUNDLE_URL:      "https://developer.api.autodesk.com/da/us-east/v3/appbundles/{0}",
-
-            CREATE_APPBUNDLE_VERSION_URL: "https://developer.api.autodesk.com/da/us-east/v3/appbundles/{0}/versions",
-            CREATE_APPBUNDLE_ALIAS_URL:   "https://developer.api.autodesk.com/da/us-east/v3/appbundles/{0}/aliases",
-
-            UPDATE_APPBUNDLE_ALIAS_URL:  "https://developer.api.autodesk.com/da/us-east/v3/appbundles/{0}/aliases/{1}",
-            CREATE_ACTIVITY_ALIAS: "https://developer.api.autodesk.com/da/us-east/v3/activities/{0}/aliases",
-        }
     }
 };

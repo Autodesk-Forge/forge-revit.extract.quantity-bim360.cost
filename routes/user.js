@@ -15,6 +15,8 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+'use strict';   
+
 
 const express = require('express');
 const { UserProfileApi } = require('forge-apis');

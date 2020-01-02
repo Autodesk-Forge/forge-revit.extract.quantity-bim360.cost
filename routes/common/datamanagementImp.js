@@ -15,6 +15,8 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+'use strict';   
+
 const request = require("request");
 const { HubsApi, ProjectsApi, FoldersApi, ItemsApi } = require('forge-apis');
 

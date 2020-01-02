@@ -15,6 +15,9 @@
 // DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
+'use strict';   
+
+
 const fs = require('fs');
 const { FoldersApi, ObjectsApi, BucketsApi, PostBucketsSigned } = require('forge-apis');
 const { OAuth } = require('./common/oauthImp');
