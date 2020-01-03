@@ -48,15 +48,15 @@ router.use(async (req, res, next) => {
 /////////////////////////////////////////////////////////////////////
 router.get('/bim360/v1/pricebook', async (req, res, next) => {
     client.connect((err) => {
-        if(err){
+        if (err) {
             console.error(err);
             return (res.status(500).json({
-                diagnostic: "failed to connect Mongo DB"
+                diagnostic: "failed to connect server"
             }));
         }
         const collection = client.db("Standard_Book").collection("Price_Book");
         // perform actions on the collection object
-        collection.find({}).toArray(function(err, docs) {
+        collection.find({}).toArray(function (err, docs) {
             if (err) {
                 console.error(err);
                 client.close();
@@ -64,18 +64,47 @@ router.get('/bim360/v1/pricebook', async (req, res, next) => {
                     diagnostic: "failed to find the items in collection"
                 }));
             }
-
-          console.log("Found the following records");
-          console.log(docs)
-          const pricebook = docs.map( (item)=> {
-              return (item.data)
-          } )
-          res.status(200).json(pricebook.filter( item => { return (item!=null)}));
-        //   client.close();
+            const pricebook = docs.map((item) => {
+                return (item.data)
+            })
+            res.status(200).json(pricebook.filter(item => { return (item != null) }));
+            return;
+            // TBD   client.close();
         });
+    });
+});
 
-      });
-      
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+// Update the price book in database
+/////////////////////////////////////////////////////////////////////
+router.post('/bim360/v1/pricebook', async (req, res, next) => {
+    const requestBody = req.body;
+    client.connect((err) => {
+        if (err) {
+            console.error(err);
+            return (res.status(500).json({
+                diagnostic: "failed to connect server"
+            }));
+        }
+        const collection = client.db("Standard_Book").collection("Price_Book");
+        // perform actions on the collection object
+        collection.updateOne({ "data.Code": requestBody.budgetCode }, { $set: { "data.Price": requestBody.unitPrice } }, function (err, result) {
+            if (err) {
+                console.error(err);
+                client.close();
+                return (res.status(500).json({
+                    diagnostic: "failed to update the items in collection"
+                }));
+            }
+            res.status(200).json(result);
+            return;
+            // TBD   client.close();
+        });
+    });
 });
 
 

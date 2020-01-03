@@ -16,38 +16,6 @@
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
 
-// TBD: move this to cloud database
-var Standard_Book = {
-  "Concrete": {
-    "Price": 146,
-    "Unit": "m3",
-    "Code": "200420420847"
-  },
-  "Window" : {
-    "Price": 1224,
-    "Unit": "nr",
-    "Code": "200420420857"
-  },
-  "Door" : {
-    "Price": 1836,
-    "Unit": "nr",
-    "Code": "200420420867"
-  },
-  "Floor" : {
-    "Price": 80,
-    "Unit": "m2",
-    "Code": "200420420877"
-  }
-} 
-
-const Budget_Table_Columns = [
-  { title: "Element" },
-  { title: "Code" },
-  { title: "Quantity" },
-  { title: "Unit" },
-  { title: "Unit Price($)" },
-  { title: "Amount($)" }
-];
 
 var budgetMgrInstance = null;
 
@@ -60,65 +28,62 @@ function random_rgba() {
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////
-/// Update the standard book, TBD: move to database
+/// Class to handle PriceBook database
 ///////////////////////////////////////////////////////////////////////
-function updateStandarBook( budgetCode, unitPrice ){
-  for( var item in Standard_Book){
-    if( Standard_Book[item]['Code'] === budgetCode ){
-      Standard_Book[item]['Price'] = unitPrice;
-    }
-  }
-}
-
-
-
-class PriceBook{
-  constructor(  ) {
-      this.priceBookUrl = '/api/forge/bim360/v1/pricebook';
-      this.priceInfo = [];
+class PriceBook {
+  constructor() {
+    this.priceBookUrl = '/api/forge/bim360/v1/pricebook';
+    this.priceInfo = [];
   }
 
-  async initPriceBook(){
-    let priceBookRes = null;
-    try{
-      priceBookRes = await getDataClientAsync(this.priceBookUrl);
-    }catch(err){
-      console.error( err );
+  async initPriceBook() {
+    try {
+      this.priceInfo = await getDataClientAsync(this.priceBookUrl);
+    } catch (err) {
+      console.error(err);
       this.priceInfo = null;
     }
-    for( let key in priceBookRes ){
-      this.priceInfo.push( priceBookRes[key] );
-    }
   }
 
-  getPriceInfoForElement( elementName ){
-
-    for( let key in this.priceInfo ){
-      if( this.priceInfo[key][elementName] != null ){
-        return this.priceInfo[key][elementName];
+  getPriceInfoForElement(elementName) {
+    for (let key in this.priceInfo) {
+      if (this.priceInfo[key].Type === elementName) {
+        return this.priceInfo[key];
       }
     }
-
-
   }
 
+  async updatePriceBook(budgetCode, unitPrice) {
+    const requestBody = {
+      budgetCode: budgetCode,
+      unitPrice: unitPrice
+    };
+    try {
+      const priceBookRes = await postDataClientAsync(this.priceBookUrl, requestBody);
+    } catch (err) {
+      console.log(err);
+      return false;
+    }
+    return true;
+  }
 }
-
-
 
 
 ///////////////////////////////////////////////////////////////////////
 /// Class to handle Budget Chart
 ///////////////////////////////////////////////////////////////////////
-class BudgetChart{
+class BudgetChart {
 
-  constructor( chartId,  title, dataSet=[] ) {
+  static budgetStatisticChartTitle = 'Budget Statistic';
+
+  constructor(chartId, dataSet = []) {
     this.budgets = dataSet;
 
     var canvas = document.getElementById(chartId);
-    var ctx = canvas.getContext('2d'); 
-    
+    var ctx = canvas.getContext('2d');
+
     this.chart = new Chart(ctx, {
       type: 'bar',
       data: dataSet,
@@ -134,7 +99,7 @@ class BudgetChart{
         maintainAspectRatio: true,
         title: {
           display: true,
-          text: title
+          text: BudgetChart.budgetStatisticChartTitle
         },
         tooltips: {
           mode: 'index',
@@ -145,11 +110,11 @@ class BudgetChart{
         }
       }
     });
-    this.chart.update();  
+    this.chart.update();
   }
 
-  refreshChart(dataSet){
-    if(this.chart === null){
+  refreshChart(dataSet) {
+    if (this.chart === null) {
       console.log('Chart is not initialized.');
       return;
     }
@@ -161,19 +126,28 @@ class BudgetChart{
 ///////////////////////////////////////////////////////////////////////
 /// Class to handle budget table
 ///////////////////////////////////////////////////////////////////////
-class BudgetTable{
+class BudgetTable {
 
-  constructor( tableId, columns, dataSet=[] ) {
+  static Budget_Table_Columns = [
+    { title: "Element" },
+    { title: "Code" },
+    { title: "Quantity" },
+    { title: "Unit" },
+    { title: "Unit Price($)" },
+    { title: "Amount($)" }
+  ];
+
+  constructor(tableId, dataSet = []) {
     this.tableId = tableId;
     this.table = $(tableId).DataTable({
       pageLength: 10,
       data: dataSet,
-      columns: columns
+      columns: BudgetTable.Budget_Table_Columns
     });
   }
 
-  refreshTable( dataSet = null){
-    if(this.table === null){
+  refreshTable(dataSet = null) {
+    if (this.table === null) {
       console.log('The table is not initialized, please re-check');
       return;
     }
@@ -201,28 +175,27 @@ class BudgetTable{
     return budgetData;
   }
 
-  updateBudgetsTable( budgetCode, unitPrice, amount ){
-    if (this.table !== null){
+  updateBudgetsTable(budgetCode, unitPrice, amount) {
+    if (this.table !== null) {
       let tableData = this.table.data();
-      const budgetCount = tableData.length; 
+      const budgetCount = tableData.length;
       // reset the data
-      for( let i = 0; i < budgetCount; ++i ){
-        if(tableData[i][1] === budgetCode){
+      for (let i = 0; i < budgetCount; ++i) {
+        if (tableData[i][1] === budgetCode) {
           tableData[i][4] = unitPrice;
           tableData[i][5] = amount;
           break;
         }
       }
     }
-  }  
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////
 /// Class to manage the operation to budget
 ///////////////////////////////////////////////////////////////////////
-class BudgetManager{
+class BudgetManager {
   static SOCKET_TOPIC_WORKITEM = 'Workitem-Notification';
-  static budgetStatisticChartTitle = 'Budget Statistic';
 
   constructor() {
     this.currentModelNode = null;
@@ -234,26 +207,26 @@ class BudgetManager{
     this.drawTableCallback = null;
 
     // initialize the charts, table and price book
-    this.budgetChart = new BudgetChart('budgetStatisticChart', BudgetManager.budgetStatisticChartTitle)
-    this.budgetTable = new BudgetTable('#priceBookTable', Budget_Table_Columns);
+    this.budgetChart = new BudgetChart('budgetStatisticChart')
+    this.budgetTable = new BudgetTable('#priceBookTable');
     this.priceBook = new PriceBook();
 
     this.socketio = io();
   }
 
-  get BudgetChart(){
+  get BudgetChart() {
     return this.budgetChart;
   }
 
-  get BudgetTable(){
+  get BudgetTable() {
     return this.budgetTable;
   }
 
   // start listen to the server
-  connectToServer(){
-    if(this.socketio){
+  connectToServer() {
+    if (this.socketio) {
       this.socketio.on(BudgetManager.SOCKET_TOPIC_WORKITEM, this.handleSocketEvent.bind(this));
-    } 
+    }
   }
 
   // handle the events sent from server
@@ -304,13 +277,13 @@ class BudgetManager{
       this.currentModelNode = null;
     }
 
-    if(this.drawTableCallback )
+    if (this.drawTableCallback)
       this.drawTableCallback();
   }
 
 
   // initialize the information of current project, including selected node and and project
-  async initBudgetMgr( modelNode, costContainerId ){
+  async initBudgetMgr(modelNode, costContainerId) {
     if (modelNode && costContainerId) {
       this.currentModelNode = modelNode;
       this.costContainerId = costContainerId;
@@ -330,7 +303,7 @@ class BudgetManager{
     };
     try {
       const requestUrl = '/api/forge/da4revit/v1/revit/' + encodeURIComponent(this.currentModelNode.storage) + '/qto';
-      this.quantityInfo = await getDataClientAsync( requestUrl, inputJson );
+      this.quantityInfo = await getDataClientAsync(requestUrl, inputJson);
       this.workingItem = this.quantityInfo.workItemId;
       return true;
     } catch (err) {
@@ -341,8 +314,8 @@ class BudgetManager{
   }
 
   // update the current budgets information to BIM 360 Cost Management module
-  async updateToBIM360(){
-    if(!this.budgetTable)
+  async updateToBIM360() {
+    if (!this.budgetTable)
       return false;
 
     const budgetData = this.budgetTable.getBudgetList();
@@ -352,11 +325,11 @@ class BudgetManager{
     }
     try {
       const requestUrl = '/api/forge/da4revit/v1/bim360/budgets';
-      const requestBody = { 
-        cost_container_id: this.costContainerId, 
+      const requestBody = {
+        cost_container_id: this.costContainerId,
         data: budgetBody
       };
-      const result = await postDataClientAsync( requestUrl, requestBody );
+      const result = await postDataClientAsync(requestUrl, requestBody);
       console.log(result);
       return true;
     } catch (err) {
@@ -366,56 +339,48 @@ class BudgetManager{
   }
 
   // get unit price from BIM 360 Cost Management module
-  async getUnitPriceFromBIM360(){
-    if(!this.costContainerId)
+  async getUnitPriceFromBIM360() {
+    if (!this.costContainerId)
       return false;
 
     let budgetsRes = null;
-    const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) +'/budgets';
+    const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) + '/budgets';
     try {
-      budgetsRes = await getDataClientAsync( requestUrl );
-    }
-    catch (err) {
+      budgetsRes = await getDataClientAsync(requestUrl);
+    } catch (err) {
       console.log(err);
       return false;
     }
     let budgetArray = [];
-    budgetsRes.forEach(async (budgetItem) => {
-      console.log(budgetItem);
-      updateStandarBook(budgetItem['code'], budgetItem['unitPrice']);
-      budgetArray.push(budgetItem['unitPrice'] * budgetItem['quantity'])
-      this.budgetTable.updateBudgetsTable(budgetItem['code'], budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
-    })
+    await Promise.all(
+      budgetsRes.map(async (budgetItem) => {
+        const status = await this.priceBook.updatePriceBook(budgetItem['code'], budgetItem['unitPrice']);
+        if (status) {
+          // TBD, label is not correct
+          budgetArray.push(budgetItem['unitPrice'] * budgetItem['quantity'])
+          this.budgetTable.updateBudgetsTable(budgetItem['code'], budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
+        }
+      })
+    )
     this.budgetTable.refreshTable();
 
     this.budgetChart.chart.data.datasets[0].data = budgetArray;
     this.budgetChart.refreshChart(this.budgetChart.chart.data);
-  
     return true;
-
   }
-
-
-
 }
 
 ///////////////////////////////////////////////////////////////////////
 /// Document ready event
 ///////////////////////////////////////////////////////////////////////
 $(document).ready(function () {
-
   $('#extractQuantityInfo').click(extractQuantityInfoHandler);
   $('#updateToBIM360Btn').click(updateToBIM360Handler);
   $('#unitPriceFromBIM360Btn').click(getUnitPriceFromBIM360Handler);
  
   budgetMgrInstance = new BudgetManager();
   budgetMgrInstance.connectToServer();
-
 });
-
-var sourceNode  = null;
-var workingItem = null;
-
 
 ///////////////////////////////////////////////////////////////////////
 /// Event to start extracting the Quantity informaiton from model
@@ -426,33 +391,27 @@ async function extractQuantityInfoHandler() {
         alert('Can not get the user hub');
         return;
     }
-
-    sourceNode = instanceTree.get_selected(true)[0];
+    const sourceNode = instanceTree.get_selected(true)[0];
     if (sourceNode == null || sourceNode.type !== 'versions' ) {
         alert('Can not get the selected file, please make sure you select a version as input');
         return;
     }
-
     const fileName = instanceTree.get_text(sourceNode.parent);
     const fileNameParams = fileName.split('.');
     if( fileNameParams[fileNameParams.length-1].toLowerCase() !== "rvt"){
         alert('please select Revit project and try again');
         return;
     }
-
     const projectHref = $('#labelProjectHref').text();
     const costContainerId = $('#labelCostContainer').text();
     if (projectHref === '' || costContainerId === '') {
       alert('please select one Revit project!');
       return;
     }
-
-    
     if( sourceNode.original.storage == null){
         alert('Can not get the storage of the version');
         return;
     }
-
 
     // Start to work.
     $('.clsInProgress').show();
@@ -487,7 +446,6 @@ async function updateToBIM360Handler() {
     alert('budget table is not initialized.');
     return;
   }
-
   const result = await budgetMgrInstance.updateToBIM360();
   if( result ){
     alert('Budgets are imported to BIM360 Cost Module.')
@@ -518,7 +476,6 @@ async function getUnitPriceFromBIM360Handler() {
   $('.clsUpdatingBIM360').hide();
   $('#unitPriceFromBIM360Btn')[0].disabled = false;
 }
-
 
 
 // helper function for GET Request
