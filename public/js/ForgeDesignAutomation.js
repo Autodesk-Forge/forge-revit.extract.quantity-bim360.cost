@@ -18,25 +18,25 @@
 
 // TBD: move this to cloud database
 var Standard_Book = {
-  'Concrete': {
-    'Price': 146,
-    'Unit': 'm3',
-    'Code': '200420420847'
+  "Concrete": {
+    "Price": 146,
+    "Unit": "m3",
+    "Code": "200420420847"
   },
-  'Window' : {
-    'Price': 1224,
-    'Unit': 'nr',
-    'Code': '200420420857'
+  "Window" : {
+    "Price": 1224,
+    "Unit": "nr",
+    "Code": "200420420857"
   },
-  'Door' : {
-    'Price': 1836,
-    'Unit': 'nr',
-    'Code': '200420420867'
+  "Door" : {
+    "Price": 1836,
+    "Unit": "nr",
+    "Code": "200420420867"
   },
-  'Floor' : {
-    'Price': 80,
-    'Unit': 'm2',
-    'Code': '200420420877'
+  "Floor" : {
+    "Price": 80,
+    "Unit": "m2",
+    "Code": "200420420877"
   }
 } 
 
@@ -70,6 +70,41 @@ function updateStandarBook( budgetCode, unitPrice ){
     }
   }
 }
+
+
+
+class PriceBook{
+  constructor(  ) {
+      this.priceBookUrl = '/api/forge/bim360/v1/pricebook';
+      this.priceInfo = [];
+  }
+
+  async initPriceBook(){
+    let priceBookRes = null;
+    try{
+      priceBookRes = await getDataClientAsync(this.priceBookUrl);
+    }catch(err){
+      console.error( err );
+      this.priceInfo = null;
+    }
+    for( let key in priceBookRes ){
+      this.priceInfo.push( priceBookRes[key] );
+    }
+  }
+
+  getPriceInfoForElement( elementName ){
+
+    for( let key in this.priceInfo ){
+      if( this.priceInfo[key][elementName] != null ){
+        return this.priceInfo[key][elementName];
+      }
+    }
+
+
+  }
+
+}
+
 
 
 
@@ -198,9 +233,10 @@ class BudgetManager{
 
     this.drawTableCallback = null;
 
-    // initialize the charts and table
+    // initialize the charts, table and price book
     this.budgetChart = new BudgetChart('budgetStatisticChart', BudgetManager.budgetStatisticChartTitle)
     this.budgetTable = new BudgetTable('#priceBookTable', Budget_Table_Columns);
+    this.priceBook = new PriceBook();
 
     this.socketio = io();
   }
@@ -221,7 +257,7 @@ class BudgetManager{
   }
 
   // handle the events sent from server
-  handleSocketEvent(data) {
+  async handleSocketEvent(data) {
     if (this.workingItem === null || data.WorkitemId !== this.workingItem)
       return;
 
@@ -244,15 +280,15 @@ class BudgetManager{
           continue;
 
         bar_labels.push(elementKey);
-
-        const unitPrice = Standard_Book[elementKey]['Price'];
+        const elementPriceInfo = this.priceBook.getPriceInfoForElement(elementKey)
+        const unitPrice = elementPriceInfo['Price'];
         const elementCount = elementInfo[elementKey];
         const elementBudget = elementCount * unitPrice;
 
         bar_elementBudget.push(elementBudget);
         bar_colors.push(random_rgba());
 
-        table_dataSet.push([elementKey, Standard_Book[elementKey]['Code'], elementCount, Standard_Book[elementKey]['Unit'], unitPrice, elementBudget]);
+        table_dataSet.push([elementKey, elementPriceInfo['Code'], elementCount, elementPriceInfo['Unit'], unitPrice, elementBudget]);
       }
       this.budgetTable.refreshTable(table_dataSet);
 
@@ -274,11 +310,12 @@ class BudgetManager{
 
 
   // initialize the information of current project, including selected node and and project
-  initCurrentProjectInfo( modelNode, costContainerId ){
+  async initBudgetMgr( modelNode, costContainerId ){
     if (modelNode && costContainerId) {
       this.currentModelNode = modelNode;
       this.costContainerId = costContainerId;
     }
+    await this.priceBook.initPriceBook();
   }
 
 
@@ -334,8 +371,8 @@ class BudgetManager{
       return false;
 
     let budgetsRes = null;
+    const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) +'/budgets';
     try {
-      const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) +'/budgets';
       budgetsRes = await getDataClientAsync( requestUrl );
     }
     catch (err) {
@@ -380,11 +417,6 @@ var sourceNode  = null;
 var workingItem = null;
 
 
-// const SOCKET_TOPIC_WORKITEM = 'Workitem-Notification';
-// socketio = io();
-// socketio.on(SOCKET_TOPIC_WORKITEM, handleSocketEvent)
-
-
 ///////////////////////////////////////////////////////////////////////
 /// Event to start extracting the Quantity informaiton from model
 ///////////////////////////////////////////////////////////////////////
@@ -396,7 +428,6 @@ async function extractQuantityInfoHandler() {
     }
 
     sourceNode = instanceTree.get_selected(true)[0];
-    // use == here because sourceNode may be undefined or null
     if (sourceNode == null || sourceNode.type !== 'versions' ) {
         alert('Can not get the selected file, please make sure you select a version as input');
         return;
@@ -416,7 +447,7 @@ async function extractQuantityInfoHandler() {
       return;
     }
 
-
+    
     if( sourceNode.original.storage == null){
         alert('Can not get the storage of the version');
         return;
@@ -430,7 +461,7 @@ async function extractQuantityInfoHandler() {
     $('#unitPriceFromBIM360Btn')[0].disabled = true;
 
 
-    budgetMgrInstance.initCurrentProjectInfo( sourceNode.original, costContainerId );
+    await budgetMgrInstance.initBudgetMgr( sourceNode.original, costContainerId );
     let result = await budgetMgrInstance.extractQuantityInfo( ()=>{
       $('.clsInProgress').hide();
       $('.clsResult').show();
@@ -449,8 +480,6 @@ async function extractQuantityInfoHandler() {
 /// Event to update the budgets info to BIM360 Cost module
 ///////////////////////////////////////////////////////////////////////
 async function updateToBIM360Handler() {
-
-
   $('.clsUpdatingBIM360').show();
   $('#updateToBIM360Btn')[0].disabled = true;
 
@@ -459,14 +488,12 @@ async function updateToBIM360Handler() {
     return;
   }
 
-
   const result = await budgetMgrInstance.updateToBIM360();
   if( result ){
     alert('Budgets are imported to BIM360 Cost Module.')
   }else{
     alert('Failed to imported Budgets to BIM360 Cost Module.')
   }
-
 
   $('.clsUpdatingBIM360').hide();
   $('#updateToBIM360Btn')[0].disabled = false;
@@ -478,19 +505,8 @@ async function updateToBIM360Handler() {
 /// Event to get unit price from BIM360 Cost module
 ///////////////////////////////////////////////////////////////////////
 async function getUnitPriceFromBIM360Handler() {
-
-  // let sourceNode = $('#sourceHubs').jstree(true).get_selected(true)[0];
-  // if (sourceNode === null) {
-  //   alert('Please select in a project that you can get the Unit Price from');
-  //   return;
-  // }
-
   $('.clsUpdatingBIM360').show();
   $('#unitPriceFromBIM360Btn')[0].disabled = true;
-
-  //get all the budgets from BIM360 Cost module
-  // TBD, get the container id first.
-
 
   const result = await budgetMgrInstance.getUnitPriceFromBIM360();
   if( result ){
@@ -499,96 +515,9 @@ async function getUnitPriceFromBIM360Handler() {
     console.log('Failed to imported Unit Price from BIM360 Cost Module.')
   }
 
-
-  // try {
-  //   const budgetsRes = await getBudgetsFromBIM360Imp('fakeonefornow');
-
-  //   let budgetArray = [];
-  //   budgetsRes.forEach(async (budgetItem) => {
-  //     console.log(budgetItem);
-  //     updateStandarBook(budgetItem['code'], budgetItem['unitPrice']);
-  //     budgetArray.push(budgetItem['unitPrice'] * budgetItem['quantity'])
-  //     budgetTable.updateBudgetsTable(budgetItem['code'], budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
-  //   })
-  //   budgetTable.refreshTable();
-
-  //   budgetChart.chart.data.datasets[0].data = budgetArray;
-  //   budgetChart.refreshChart(budgetChart.chart.data);
-  // }
-  // catch (err) {
-  //   console.log(err);
-  // }
-
   $('.clsUpdatingBIM360').hide();
   $('#unitPriceFromBIM360Btn')[0].disabled = false;
 }
-
-
-///////////////////////////////////////////////////////////////////////
-/// Implementation of extracting quantity informaiton
-///////////////////////////////////////////////////////////////////////
-// async function extractQuantityInfoImp(inputRvt, inputJson) {
-//   let def = $.Deferred();
-
-//   jQuery.get({
-//     url: '/api/forge/da4revit/v1/revit/' + encodeURIComponent(inputRvt) + '/qto',
-//     contentType: 'application/json', // The data type was sent
-//     dataType: 'json', // The data type will be received
-//     data: inputJson,
-//     success: function (res) {
-//       def.resolve(res);
-//     },
-//     error: function (err) {
-//       def.reject(err);
-//     }
-//   });
-//   return def.promise();
-// }
-
-
-///////////////////////////////////////////////////////////////////////
-/// Implementation of updating budgets info in BIM360 Cost module
-///////////////////////////////////////////////////////////////////////
-// async function updateToBIM360Imp( cost_container, inputJson){
-//   let def = $.Deferred();
-
-//   jQuery.post({
-//       url: '/api/forge/da4revit/v1/bim360/budgets',
-//       contentType: 'application/json',
-//       dataType: 'json', 
-//       data: JSON.stringify({ cost_container: cost_container, data: inputJson}),
-//       success: function (res) {
-//           def.resolve(res);
-//       },
-//       error: function (err) {
-//           def.reject(err);
-//       }
-//   });
-
-//   return def.promise();
-// }
-
-
-///////////////////////////////////////////////////////////////////////
-/// Implementation of get budgets info from BIM360 Cost module
-///////////////////////////////////////////////////////////////////////
-// async function getBudgetsFromBIM360Imp( project_id){
-//   let def = $.Deferred();
-
-//   jQuery.get({
-//       url: '/api/forge/bim360/v1/projects/' + encodeURIComponent(project_id) +'/budgets',
-//       dataType: 'json', 
-//       success: function (res) {
-//           def.resolve(res);
-//       },
-//       error: function (err) {
-//           def.reject(err);
-//       }
-//   });
-
-//   return def.promise();
-// }
-
 
 
 

@@ -119,7 +119,7 @@ function prepareUserHubsTree() {
       },
       "plugins": ["types", "state", "sort"],
       "state": { "key": "sourceHubs" }// key restore tree state
-  }).bind("activate_node.jstree", function (evt, data) {
+  }).on("select_node.jstree", function (evt, data) {
       if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {        
         const instanceTree = $('#sourceHubs').jstree(true);
         for (const parentNode in data.node.parents) {

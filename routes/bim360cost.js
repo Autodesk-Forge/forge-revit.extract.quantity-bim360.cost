@@ -25,6 +25,87 @@ const { apiClientCallAsync } = require('./common/apiclient');
 let router = express.Router();
 
 
+
+const MongoClient = require('mongodb').MongoClient;
+const uri = "mongodb+srv://forge-user:forge@myforgecluster-njl8m.mongodb.net/test?retryWrites=true&w=majority";
+var client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+
+
+///////////////////////////////////////////////////////////////////////
+/// Middleware for obtaining a token for each request.
+///////////////////////////////////////////////////////////////////////
+router.use(async (req, res, next) => {
+    const oauth = new OAuth(req.session);
+    req.oauth_token = await oauth.getInternalToken();
+    next();   
+});
+
+
+
+
+/////////////////////////////////////////////////////////////////////
+// Import budgets to BIM360 Cost module
+/////////////////////////////////////////////////////////////////////
+router.get('/bim360/v1/pricebook', async (req, res, next) => {
+    client.connect((err) => {
+        if(err){
+            console.error(err);
+            return (res.status(500).json({
+                diagnostic: "failed to connect Mongo DB"
+            }));
+        }
+        const collection = client.db("Standard_Book").collection("Price_Book");
+        // perform actions on the collection object
+        collection.find({}).toArray(function(err, docs) {
+            if (err) {
+                console.error(err);
+                client.close();
+                return (res.status(500).json({
+                    diagnostic: "failed to find the items in collection"
+                }));
+            }
+
+          console.log("Found the following records");
+          console.log(docs)
+          const pricebook = docs.map( (item)=> {
+              return (item.data)
+          } )
+          res.status(200).json(pricebook.filter( item => { return (item!=null)}));
+        //   client.close();
+        });
+
+      });
+      
+});
+
+
+// /////////////////////////////////////////////////////////////////////
+// / Get budgets info from BIM360 Cost module
+// /////////////////////////////////////////////////////////////////////
+router.get('/bim360/v1/projects/:cost_container_id/budgets', async (req, res, next) => {
+
+    const cost_container_id = req.params.cost_container_id;
+    if ( cost_container_id === '' ) {
+        return (res.status(400).json({
+            diagnostic: 'Missing input cost container id'
+        }));
+    }
+    const budgetsUrl =  bim360Cost.URL.BUDGETS_RUL.format(cost_container_id);
+    let budgetsRes = null;
+    try {
+        budgetsRes = await apiClientCallAsync( 'GET',  budgetsUrl, req.oauth_token.access_token);
+    } catch (err) {
+        console.error(err);
+        return (res.status(500).json({
+			diagnostic: 'Failed to get budgets info from BIM 360 cost module'
+        }));
+    }
+    return (res.status(200).json(budgetsRes.body.results));
+});
+
+
+
+
 // /////////////////////////////////////////////////////////////////////
 // / Import budgets to BIM360 Cost module
 // /////////////////////////////////////////////////////////////////////
@@ -32,42 +113,21 @@ router.post('/da4revit/v1/bim360/budgets', async (req, res, next) => {
     const cost_container_id = req.body.cost_container_id;
     const budgetList  = req.body.data; // input Url of Excel file
     if ( budgetList === '' ) {
-        res.status(400).end('Missing input body');
-        return;
+        return (res.status(400).json({
+            diagnostic: 'Missing input body info'
+        }));
     }
+    const importBudgetsUrl =  bim360Cost.URL.IMPORT_BUDGETS_URL.format(cost_container_id);
+    let budgetsRes = null;
     try {
-        const oauth = new OAuth(req.session);
-        const internalToken = await oauth.getInternalToken();
-        const importBudgetsUrl =  bim360Cost.URL.IMPORT_BUDGETS_URL.format(cost_container_id);
-        const budgetsRes = await apiClientCallAsync( 'POST',  importBudgetsUrl, internalToken.access_token, budgetList);
-        res.status(200).end(JSON.stringify(budgetsRes.body));
+        budgetsRes = await apiClientCallAsync( 'POST',  importBudgetsUrl, req.oauth_token.access_token, budgetList);
     } catch (err) {
-        res.status(500).end("error");
+        console.error(err);
+        return (res.status(500).json({
+			diagnostic: 'Failed to import budgets into BIM 360 cost module'
+        }));
     }
-});
-
-
-// /////////////////////////////////////////////////////////////////////
-// / Import budgets to BIM360 Cost module
-// /////////////////////////////////////////////////////////////////////
-router.get('/bim360/v1/projects/:cost_container_id/budgets', async (req, res, next) => {
-
-    const cost_container_id = req.params.cost_container_id;
-    if ( cost_container_id === '' ) {
-        res.status(400).end('Missing input project id');
-        return;
-    }
-    try {
-        const oauth = new OAuth(req.session);
-        const internalToken = await oauth.getInternalToken();
-
-        const budgetsUrl =  bim360Cost.URL.BUDGETS_RUL.format(cost_container_id);
-
-        const budgetsRes = await apiClientCallAsync( 'GET',  budgetsUrl, internalToken.access_token);
-        res.status(200).end(JSON.stringify(budgetsRes.body.results));
-    } catch (err) {
-        res.status(500).end("error");
-    }
+    return (res.status(200).json(budgetsRes.body));
 });
 
 
