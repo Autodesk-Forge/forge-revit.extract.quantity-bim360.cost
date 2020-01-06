@@ -45,6 +45,7 @@ This sample demonstrates generating quantity and budgets from Revit model direct
 4. **Revit 2019**: required to compile changes into the plugin
 5. **JavaScript ES6** syntax for server-side.
 6. **JavaScript** basic knowledge with **jQuery**
+7. **MongoDB**: noSQL database, learn more. Or use a online version via Mongo Altas (this is used on this sample)
 
 
 For using this sample, you need an Autodesk developer credentials. Visit the [Forge Developer Portal](https://developer.autodesk.com), sign up for an account, then [create an app](https://developer.autodesk.com/myapps/create). For this new app, use **http://localhost:3000/api/forge/callback/oauth** as Callback URL, although is not used on 2-legged flow. Finally take note of the **Client ID** and **Client Secret**.
@@ -59,11 +60,25 @@ Clone this project or download it (this `nodejs` branch only). It's recommended 
 
 Install the required packages using `npm install`.
 
-### ngrok
+**MongoDB**
+
+[MongoDB](https://www.mongodb.com) is a no-SQL database based on "documents", which stores JSON-like data. For testing purpouses, you can either use local or live. For cloud environment, try [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (offers a free tier). With MongoDB Atlas you can set up an account for free and create clustered instances, intructions:
+
+1. Create a account on MongoDB Atlas.
+2. Under "Collections", create a new database (e.g. named `Standard_Book`) with a collection (e.g. named `Price_Book`).
+3. Under "Command Line Tools", whitelist the IP address to access the database, [see this tutorial](https://docs.atlas.mongodb.com/security-whitelist/). If the sample is running on Heroku, you'll need to open to all (IP `0.0.0.0/0`). Create a new user to access the database. 
+
+At this point the connection string should be in the form of 
+`mongodb+srv://<username>:<password>@myforgecluster-njl8m.mongodb.net/Standard_Book?retryWrites=true&w=majority`. [Learn more here](https://docs.mongodb.com/manual/reference/connection-string/)
+
+There are several tools to view your database, [Robo 3T](https://robomongo.org/) (formerly Robomongo) is a free lightweight GUI that can be used. When it opens, follow instructions [here](https://www.datduh.com/blog/2017/7/26/how-to-connect-to-mongodb-atlas-using-robo-3t-robomongo) to connect to MongoDB Atlas.
+
+
+**ngrok**
 
 Run `ngrok http 3000` to create a tunnel to your local machine, then copy the address into the `FORGE_WEBHOOK_URL` environment variable. Please check [WebHooks](https://forge.autodesk.com/en/docs/webhooks/v1/tutorials/configuring-your-server/) for details.
 
-### Environment variables
+**Environment variables**
 
 Set the enviroment variables with your client ID & secret and finally start it. Via command line, navigate to the folder where this repository was cloned and use the following:
 
@@ -74,6 +89,8 @@ Mac OSX/Linux (Terminal)
     export FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     export FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     export FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
+    export OAUTH_DATABASE="mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/Standard_Book?retryWrites=true>>"
+
     npm start
 
 Windows (use **Node.js command line** from Start menu)
@@ -83,16 +100,18 @@ Windows (use **Node.js command line** from Start menu)
     set FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     set FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     set FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
+    set OAUTH_DATABASE="mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/Standard_Book?retryWrites=true>>"
     npm start
 
 ### Using the app
 
-Open the browser: [http://localhost:3000](http://localhost:3000), it provides the abilities to export & import parameter with Excel: 
+Open the browser: [http://localhost:3000](http://localhost:3000), it provides the abilities to extract quantity information and create budgets in BIM 360 Cost Management module based on the price book.
 
-1. Select Revit file version in BIM360 Hub to view the Model, Select parameters which you want to export|import, choose either export or import and click 'Execute'.
-2. Select the Door type or instance in Model Viewer, and open the customized property panel to see the result.
+1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity and create the budget for different elements.
+2. Clike `Update to BIM360`, it will import the budgets into BIM 360 Cost Management module.
+3. Open `BIM 360 Cost Management` module, check the budgets, and change the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the price book using the updated **Unit Price** from BIM360, and re-calculate the budgets for each element. 
 
-`Note`: When you deploy the app, you have to open the `Configure` button to create the AppBundle & Activity before running the Export|Import feature, please check the video for the steps at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)
+`Note`: When you deploy the app, you have to open the `Configure` button to initialize the MongoDB of **Price Book** and create the AppBundle & Activity before running the Export|Import feature, please check the video for the steps at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)
 
 ## Deployment
 
@@ -121,6 +140,13 @@ Documentation:
 Desktop APIs:
 
 - [Revit](https://knowledge.autodesk.com/support/revit-products/learn-explore/caas/simplecontent/content/my-first-revit-plug-overview.html)
+
+
+Other APIs:
+
+- [MongoDB for Node.js#](https://docs.mongodb.com/ecosystem/drivers/node/) driver
+- [Mongo Altas](https://www.mongodb.com/cloud/atlas) Database-as-a-Service for MongoDB
+
 
 ## Tips & Tricks
 - The sample use the local endpoint to accept the outputJson file which is generated by the Revit cloud engine, this help improve the performance.

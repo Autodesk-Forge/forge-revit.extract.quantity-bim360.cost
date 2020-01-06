@@ -18,18 +18,41 @@
 'use strict';   
 
 const express = require('express');
-const { bim360Cost }= require('../config');
+const { bim360Cost, database }= require('../config');
 const { OAuth } = require('./common/oauthImp');
 const { apiClientCallAsync } = require('./common/apiclient');
+const MongoClient = require('mongodb').MongoClient;
 
 let router = express.Router();
 
+// Sample price book database, you can create complex database per your request
+const price_Book = [
+    {
+        "Type": "Concrete",
+        "Price": 146,
+        "Unit": "m3",
+        "Code": "200420420847"
 
+    }, {
+        "Type": "Window",
+        "Price": 1224,
+        "Unit": "nr",
+        "Code": "200420420857"
+    }, {
+        "Type": "Door",
+        "Price": 1836,
+        "Unit": "nr",
+        "Code": "200420420867"
 
-const MongoClient = require('mongodb').MongoClient;
-const uri = "mongodb+srv://forge-user:forge@myforgecluster-njl8m.mongodb.net/test?retryWrites=true&w=majority";
-var client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    }, {
+        "Type": "Floor",
+        "Price": 80,
+        "Unit": "m2",
+        "Code": "200420420877"
+    }
+]
 
+var mongoClient = new MongoClient(database.url, { useNewUrlParser: true, useUnifiedTopology: true });
 
 ///////////////////////////////////////////////////////////////////////
 /// Middleware for obtaining a token for each request.
@@ -41,40 +64,111 @@ router.use(async (req, res, next) => {
 });
 
 
-
-
-/////////////////////////////////////////////////////////////////////
-// Import budgets to BIM360 Cost module
-/////////////////////////////////////////////////////////////////////
-router.get('/bim360/v1/pricebook', async (req, res, next) => {
-    client.connect((err) => {
+// reset the database
+router.post('/bim360/v1/database', async (req, res, next) => {
+    mongoClient.connect((err, db) => {
         if (err) {
             console.error(err);
             return (res.status(500).json({
                 diagnostic: "failed to connect server"
             }));
         }
-        const collection = client.db("Standard_Book").collection("Price_Book");
+        let dbo = db.db("Standard_Book");
+
+        dbo.collections(  (err, collections)=>{
+            if (err) {
+                console.error(err);
+                return (res.status(500).json({
+                    diagnostic: "failed to find existing collection"
+                }));
+            }
+            const priceBook = collections.find( (item)=>{
+                return item.collectionName == 'Price_Book';
+            } )
+            if( priceBook != null ){
+                dbo.collection("Price_Book").drop( (err, delOk) => {
+                    if (err) {
+                        console.error(err);
+                        return (res.status(500).json({
+                            diagnostic: "failed to delete existing collection"
+                        }));
+                    }
+                    dbo.createCollection("Price_Book", (err, collection) => {
+                        if (err) {
+                            console.error(err);
+                            return (res.status(500).json({
+                                diagnostic: "failed to create collection"
+                            }));
+                        }
+            
+                        collection.insertMany(price_Book, (err, docs) => {
+                            if (err) {
+                                console.error(err);
+                                return (res.status(500).json({
+                                    diagnostic: "failed to create collection"
+                                }));
+                            }
+                            res.status(200).json(docs.ops);
+                            return;
+                            // TBD   mongoClient.close();
+                        })
+                    })
+                })
+            }else{
+                dbo.createCollection("Price_Book", (err, collection) => {
+                    if (err) {
+                        console.error(err);
+                        return (res.status(500).json({
+                            diagnostic: "failed to create collection"
+                        }));
+                    }
+        
+                    collection.insertMany(price_Book, (err, docs) => {
+                        if (err) {
+                            console.error(err);
+                            return (res.status(500).json({
+                                diagnostic: "failed to create collection"
+                            }));
+                        }
+                        res.status(200).json(docs.ops);
+                        return;
+                        // TBD   mongoClient.close();
+                    })
+                })   
+            }
+        } )
+    });
+})
+
+
+
+/////////////////////////////////////////////////////////////////////
+// Import budgets to BIM360 Cost module
+/////////////////////////////////////////////////////////////////////
+router.get('/bim360/v1/pricebook', async (req, res, next) => {
+    mongoClient.connect((err) => {
+        if (err) {
+            console.error(err);
+            return (res.status(500).json({
+                diagnostic: "failed to connect server"
+            }));
+        }
+        const collection = mongoClient.db("Standard_Book").collection("Price_Book");
         // perform actions on the collection object
         collection.find({}).toArray(function (err, docs) {
             if (err) {
                 console.error(err);
-                client.close();
+                mongoClient.close();
                 return (res.status(500).json({
                     diagnostic: "failed to find the items in collection"
                 }));
             }
-            const pricebook = docs.map((item) => {
-                return (item.data)
-            })
-            res.status(200).json(pricebook.filter(item => { return (item != null) }));
+            res.status(200).json(docs.filter(item => { return (item != null) }));
             return;
-            // TBD   client.close();
+            // TBD   mongoClient.close();
         });
     });
 });
-
-
 
 
 
@@ -83,26 +177,26 @@ router.get('/bim360/v1/pricebook', async (req, res, next) => {
 /////////////////////////////////////////////////////////////////////
 router.post('/bim360/v1/pricebook', async (req, res, next) => {
     const requestBody = req.body;
-    client.connect((err) => {
+    mongoClient.connect((err) => {
         if (err) {
             console.error(err);
             return (res.status(500).json({
                 diagnostic: "failed to connect server"
             }));
         }
-        const collection = client.db("Standard_Book").collection("Price_Book");
+        const collection = mongoClient.db("Standard_Book").collection("Price_Book");
         // perform actions on the collection object
-        collection.updateOne({ "data.Code": requestBody.budgetCode }, { $set: { "data.Price": requestBody.unitPrice } }, function (err, result) {
+        collection.updateOne({ "Code": requestBody.budgetCode }, { $set: { "Price": requestBody.unitPrice } }, function (err, result) {
             if (err) {
                 console.error(err);
-                client.close();
+                mongoClient.close();
                 return (res.status(500).json({
                     diagnostic: "failed to update the items in collection"
                 }));
             }
             res.status(200).json(result);
             return;
-            // TBD   client.close();
+            // TBD   mongoClient.close();
         });
     });
 });

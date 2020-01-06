@@ -43,6 +43,7 @@ $(document).ready(function () {
     });
     $('#defineActivityShow').click(defineActivityModal);
     $('#createAppBundleActivity').click(createAppBundleActivity);
+    $('#resetPriceBook').click(resetPriceBook);
 
 });
 
@@ -77,6 +78,19 @@ function list(control, endpoint) {
     });
 }
 
+
+async function resetPriceBook(){
+    $('.resetingPriceBook').show();
+    $('#resetPriceBook').hide();
+    try{
+        await initPriceBook();
+    }catch(err){
+        console.error(err);
+    }
+    $('.resetingPriceBook').hide();
+    $('#resetPriceBook').show();
+
+}
 
 async function deleteAppBundle( appBundleName ) {
     let def = $.Deferred();
@@ -136,6 +150,26 @@ async function createAppBundleActivity() {
         return;
     }
 }
+
+
+function initPriceBook(){
+    let def = $.Deferred();
+
+    jQuery.ajax({
+        url: 'api/forge/bim360/v1/database',
+        method: 'POST',
+        contentType: 'application/json',
+        dataType: 'json',
+        success: function (res) {
+            def.resolve(res);
+        },
+        error: function (err) {
+            def.reject(err);
+          }    
+    });
+    return def.promise();
+}
+
 
 function createAppBundle(fileName) {
     let def = $.Deferred();

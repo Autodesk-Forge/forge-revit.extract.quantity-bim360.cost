@@ -24,6 +24,9 @@ module.exports = {
         client_secret: process.env.FORGE_CLIENT_SECRET,
         callback_url: process.env.FORGE_CALLBACK_URL
     },
+    database:{
+        url : process.env.OAUTH_DATABASE
+    },
     scopes: {
         // Required scopes for the server-side application
         internal: ['code:all', 'bucket:create', 'bucket:read', 'data:read', 'data:create', 'data:write'],

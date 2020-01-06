@@ -23,6 +23,10 @@
         "FORGE_WEBHOOK_URL": {
             "description": "Base domain URL of your webhook",
             "value": "http://<<YOUR HEROKU APP NAME HERE>>.herokuapp.com"
+        },
+        "OAUTH_DATABASE": {
+            "description": "MongoDB connection string, e.g frmm mLab",
+            "value": "mongodb://user:password@ds1234.mlab.com:6789/databaseName"
         }
     },
     "website": "https://developer.autodesk.com/",
