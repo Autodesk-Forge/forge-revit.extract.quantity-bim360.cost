@@ -20,7 +20,7 @@ Whatch the recording at [Youtube](https://youtu.be/YxCrv3Fh-5c).
 
 5. Select the environment and enter your [Forge App's](https://developer.autodesk.com/myapps) `Client ID` and `Client Secret`. This is used for authentication. In the environment variables give your app an easy to manage unique nickname.
 
-6. Compile and package the sample applications as noted [here](https://forge.autodesk.com/en/docs/design-automation/v3/tutorials/revit/step4-publish-appbundle/). You will need this to upload the app to Design Automation. Alternatively you may also download the packages from [ExportImportExcel.zip](./AppBundlePackage/ExportImportExcel.zip).
+6. Compile and package the sample applications as noted [here](https://forge.autodesk.com/en/docs/design-automation/v3/tutorials/revit/step4-publish-appbundle/). You will need this to upload the app to Design Automation. Alternatively you may also download the packages from [RevitQto.zip](./AppBundlePackage/RevitQto.zip).
 
 7. Create a nickname for your Forge App.
 
