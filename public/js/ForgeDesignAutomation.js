@@ -53,6 +53,7 @@ class PriceBook {
         return this.priceInfo[key];
       }
     }
+    return null;
   }
 
   async updatePriceBook(budgetCode, unitPrice) {
@@ -163,7 +164,7 @@ class BudgetTable {
         const item = {
           parentId: null,
           code: budgetItem[1],
-          name: budgetItem[0] + ' Budget',
+          name: budgetItem[0],
           quantity: budgetItem[2],
           description: "",
           unit: budgetItem[3],
@@ -253,7 +254,11 @@ class BudgetManager {
           continue;
 
         bar_labels.push(elementKey);
-        const elementPriceInfo = this.priceBook.getPriceInfoForElement(elementKey)
+        const elementPriceInfo = this.priceBook.getPriceInfoForElement(elementKey);
+        if(elementPriceInfo == null){
+          console.error("can not find the price info for element: " + elementKey);
+          continue;
+        }
         const unitPrice = elementPriceInfo['Price'];
         const elementCount = elementInfo[elementKey];
         const elementBudget = elementCount * unitPrice;
@@ -352,11 +357,12 @@ class BudgetManager {
       return false;
     }
     let budgetArray = [];
+    let budgetLabel = [];
     await Promise.all(
       budgetsRes.map(async (budgetItem) => {
         const status = await this.priceBook.updatePriceBook(budgetItem['code'], budgetItem['unitPrice']);
         if (status) {
-          // TBD, label is not correct
+          budgetLabel.push(budgetItem['name']);
           budgetArray.push(budgetItem['unitPrice'] * budgetItem['quantity'])
           this.budgetTable.updateBudgetsTable(budgetItem['code'], budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
         }
@@ -365,6 +371,7 @@ class BudgetManager {
     this.budgetTable.refreshTable();
 
     this.budgetChart.chart.data.datasets[0].data = budgetArray;
+    this.budgetChart.chart.data.labels = budgetLabel;
     this.budgetChart.refreshChart(this.budgetChart.chart.data);
     return true;
   }

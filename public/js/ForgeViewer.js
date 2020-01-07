@@ -25,7 +25,6 @@ function launchViewer(urn) {
   };
 
   var config3d = {
-    extensions: ['CustomPropertyPanelExtension'],
   };
 
   Autodesk.Viewing.Initializer(options, function onInitialized() {

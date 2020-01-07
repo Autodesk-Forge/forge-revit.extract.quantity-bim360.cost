@@ -1,4 +1,4 @@
-# forge-revit.qto.budget
+# forge-revit.extract.quantity-bim360.cost
 
 [![Node.js](https://img.shields.io/badge/Node.js-8.0-blue.svg)](https://nodejs.org/)
 [![npm](https://img.shields.io/badge/npm-4.0-blue.svg)](https://www.npmjs.com/)
@@ -11,7 +11,7 @@
 
 ![Windows](https://img.shields.io/badge/Plugins-Windows-lightgrey.svg)
 ![.NET](https://img.shields.io/badge/.NET%20Framework-4.7-blue.svg)
-[![Revit-2019](https://img.shields.io/badge/Revit-2019-lightgrey.svg)](http://autodesk.com/revit)
+[![Revit-2020](https://img.shields.io/badge/Revit-2020-lightgrey.svg)](http://autodesk.com/revit)
 
 
 ![Advanced](https://img.shields.io/badge/Level-Advanced-red.svg)
@@ -28,11 +28,11 @@ This sample demonstrates generating quantity and budgets from Revit model direct
 [![https://youtu.be/Q7kyh5A__mg](http://img.youtube.com/vi/Q7kyh5A__mg/0.jpg)](http://www.youtube.com/watch?v=Q7kyh5A__mg "Generate Quantity and Budget from Revit model directly, and export to BIM360 Cost module as new Budgets")
 
 # Live Demo
-[https://revitexcel.herokuapp.com/](https://revitexcel.herokuapp.com/)
+[https://revit-qto-bim360cost.herokuapp.com/](https://revit-qto-bim360cost.herokuapp.com/)
 
 # Main Parts of The Work
-1. Create a Revit Plugin to be used within AppBundle of Design Automation for Revit. Please check [PlugIn](./ExportImportExcelPlugin/) 
-2. Create your App, upload the AppBundle, define your Activity and test the workitem with the Postman collection under [Postman Collection](./PostmanCollection/) 
+1. Create a Revit Plugin to be used within AppBundle of Design Automation for Revit. Please check [PlugIn](./RevitQtoPlugin/) 
+2. Create your App, upload the AppBundle, define your Activity and test the workitem with the Postman collection under [Postman Collection](./PostmanCollection/), or you can refer ([https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)) and simply use the `Configure` button in the Web Application to create the Appbundle & Activity. 
 3. Create the Web App to call the workitem.
 
 # Web App Setup
@@ -42,7 +42,7 @@ This sample demonstrates generating quantity and budgets from Revit model direct
 1. **Forge Account**: Learn how to create a Forge Account, activate subscription and create an app at [this tutorial](http://learnforge.autodesk.io/#/account/). 
 2. **Visual Code**: Visual Code (Windows or MacOS).
 3. **ngrok**: Routing tool, [download here](https://ngrok.com/)
-4. **Revit 2019**: required to compile changes into the plugin
+4. **Revit 2020**: required to compile changes into the plugin
 5. **JavaScript ES6** syntax for server-side.
 6. **JavaScript** basic knowledge with **jQuery**
 7. **MongoDB**: noSQL database, learn more. Or use a online version via Mongo Altas (this is used on this sample)
@@ -60,23 +60,26 @@ Clone this project or download it (this `nodejs` branch only). It's recommended 
 
 Install the required packages using `npm install`.
 
+**ngrok**
+
+Run `ngrok http 3000` to create a tunnel to your local machine, then copy the address into the `FORGE_WEBHOOK_URL` environment variable. Please check [WebHooks](https://forge.autodesk.com/en/docs/webhooks/v1/tutorials/configuring-your-server/) for details.
+
 **MongoDB**
 
 [MongoDB](https://www.mongodb.com) is a no-SQL database based on "documents", which stores JSON-like data. For testing purpouses, you can either use local or live. For cloud environment, try [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (offers a free tier). With MongoDB Atlas you can set up an account for free and create clustered instances, intructions:
 
-1. Create a account on MongoDB Atlas.
-2. Under "Collections", create a new database (e.g. named `Standard_Book`) with a collection (e.g. named `Price_Book`).
-3. Under "Command Line Tools", whitelist the IP address to access the database, [see this tutorial](https://docs.atlas.mongodb.com/security-whitelist/). If the sample is running on Heroku, you'll need to open to all (IP `0.0.0.0/0`). Create a new user to access the database. 
+1. Create an account on MongoDB Atlas.
+2. Create a free version of cluster, use the default setting, but name it as `forgesample` for example.
+3. Whitelist the IP address to access the database, [see this tutorial](https://docs.atlas.mongodb.com/security-whitelist/). If the sample is running on Heroku, you'll need to open to all (IP `0.0.0.0/0`). 
+4. Create a new user to access the database, please keep the **user name** and **password** to be used in the following connection. 
 
-At this point the connection string should be in the form of 
-`mongodb+srv://<username>:<password>@myforgecluster-njl8m.mongodb.net/Standard_Book?retryWrites=true&w=majority`. [Learn more here](https://docs.mongodb.com/manual/reference/connection-string/)
+At this point the connection string to the MongoDB server should be in the form of 
+`mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net`. please set environment variable `OAUTH_DATABASE` with this url. [Learn more here](https://docs.mongodb.com/manual/reference/connection-string/)
+
+**NOTE**: The price book database need to be initialized before using. But you are not required to set it manually, to make it easy, you can use `Price Book` configuration button and click **Reset** to initialize the database with the default setting.  
 
 There are several tools to view your database, [Robo 3T](https://robomongo.org/) (formerly Robomongo) is a free lightweight GUI that can be used. When it opens, follow instructions [here](https://www.datduh.com/blog/2017/7/26/how-to-connect-to-mongodb-atlas-using-robo-3t-robomongo) to connect to MongoDB Atlas.
 
-
-**ngrok**
-
-Run `ngrok http 3000` to create a tunnel to your local machine, then copy the address into the `FORGE_WEBHOOK_URL` environment variable. Please check [WebHooks](https://forge.autodesk.com/en/docs/webhooks/v1/tutorials/configuring-your-server/) for details.
 
 **Environment variables**
 
@@ -89,7 +92,7 @@ Mac OSX/Linux (Terminal)
     export FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     export FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     export FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
-    export OAUTH_DATABASE="mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/Standard_Book?retryWrites=true>>"
+    export OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net>>"
 
     npm start
 
@@ -100,18 +103,21 @@ Windows (use **Node.js command line** from Start menu)
     set FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     set FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     set FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
-    set OAUTH_DATABASE="mongodb+srv://<username>:<password>@clusterX-a1b2c4.mongodb.net/Standard_Book?retryWrites=true>>"
+    set OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net>>"
     npm start
 
 ### Using the app
 
-Open the browser: [http://localhost:3000](http://localhost:3000), it provides the abilities to extract quantity information and create budgets in BIM 360 Cost Management module based on the price book.
+Open the browser: [http://localhost:3000](http://localhost:3000).
+**Setup the app before using the App:**
+1. Make sure the Forge App is integrated with your BIM 360 account, please click `Enable my BIM 360 Account` and follow the steps to finish the integration. 
+2. Make sure to create **Revi Design Automation** Appbundle & activity, click `Configure` button and create it. Currently, Revit 2019&2020 are both supported. please refer the video at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)
+3. Make sure to initialize the **Price Book** database, click `Price Book` button and Reset it. it will create `Standard_Book`(database), `Price_Book`(collection), with a couple of predefined price items.  
 
-1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity and create the budget for different elements.
+**Operate with App**
+1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity and display you with the budgets info for different elements.
 2. Clike `Update to BIM360`, it will import the budgets into BIM 360 Cost Management module.
-3. Open `BIM 360 Cost Management` module, check the budgets, and change the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the price book using the updated **Unit Price** from BIM360, and re-calculate the budgets for each element. 
-
-`Note`: When you deploy the app, you have to open the `Configure` button to initialize the MongoDB of **Price Book** and create the AppBundle & Activity before running the Export|Import feature, please check the video for the steps at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)
+3. Open `BIM 360 Cost Management` module, check the budgets, and update the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the price book and refresh budget table|chart based on the updated **Unit Price** from BIM360.
 
 ## Deployment
 
@@ -123,27 +129,20 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
 
 ## Packages used
 - The sample is using [autodesk.forge.designautomation](https://www.npmjs.com/package/autodesk.forge.designautomation) SDK.
-
 - The [Autodesk Forge](https://www.npmjs.com/package/forge-apis) packages is included by default. Some other non-Autodesk packaged are used, including [socket.io](https://www.npmjs.com/package/socket.io), [express](https://www.npmjs.com/package/express).
-
 - Within the Revit Plugin, [LibXL](http://www.libxl.com) is used to read/write the date of Excel. 
 
 ## Further Reading
 
-Documentation:
+**Documentation:**
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar. 
-
 - [Design Automation API](https://forge.autodesk.com/en/docs/design-automation/v3/developers_guide/overview/)
 - [BIM 360 API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
 - [Data Management API](httqqqps://developer.autodesk.com/en/docs/data/v2/overview/)
 
-Desktop APIs:
-
+**Desktop APIs:**
 - [Revit](https://knowledge.autodesk.com/support/revit-products/learn-explore/caas/simplecontent/content/my-first-revit-plug-overview.html)
-
-
-Other APIs:
-
+**Other APIs:**
 - [MongoDB for Node.js#](https://docs.mongodb.com/ecosystem/drivers/node/) driver
 - [Mongo Altas](https://www.mongodb.com/cloud/atlas) Database-as-a-Service for MongoDB
 
@@ -158,10 +157,8 @@ After installing Github desktop for Windows, on the Git Shell, if you see a ***e
     git config --global http.sslverify "false"
 
 ## Limitation
-- Before using the sample to call the workitem, you need to setup your Appbundle & Activity of Design Automation, you can follow my Postman script to understand the whole process, or you can simply use the `Configure` button in the Web Application to create the Appbundle & Activity([https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)). 
+- BIM 360 Cost Management module needs to be activated to use this App, due to the current limitation of Cost project setting API, user needs to setup project manually. 
 - Currently Revit Cloud Worksharing is not supported by the Design Automation.  The scenario that this sample demonstrates is applicable only with a file-based Revit model. 
-- The free version of [LibXL](http://www.libxl.com) I used will write a banner in the first row of each spreadsheet and it will be able to read only 300 cells (first row is unavailable). If you want to remove banner and reading restriction, you may contact them for a license.
-- It takes time for BIM360 to automatically translate the new uploaded Revit file version, please wait for a while to see the viewable and properties.
 - Client JavaScript requires modern browser.
 
 ## License
