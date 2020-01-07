@@ -82,8 +82,10 @@ function list(control, endpoint) {
 async function resetPriceBook(){
     $('.resetingPriceBook').show();
     $('#resetPriceBook').hide();
+
+    const budgetCodeLength = parseInt($('#budgetCodeLength').val());
     try{
-        await initPriceBook();
+        await initPriceBook(budgetCodeLength);
     }catch(err){
         console.error(err);
     }
@@ -152,7 +154,7 @@ async function createAppBundleActivity() {
 }
 
 
-function initPriceBook(){
+function initPriceBook( budgetCodeLength ){
     let def = $.Deferred();
 
     jQuery.ajax({
@@ -160,6 +162,9 @@ function initPriceBook(){
         method: 'POST',
         contentType: 'application/json',
         dataType: 'json',
+        data: JSON.stringify({
+            budgetCodeLength: budgetCodeLength
+        }),
         success: function (res) {
             def.resolve(res);
         },

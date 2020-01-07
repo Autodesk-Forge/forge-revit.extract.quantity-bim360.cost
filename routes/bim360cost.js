@@ -30,25 +30,19 @@ const price_Book = [
     {
         "Type": "Concrete",
         "Price": 146,
-        "Unit": "m3",
-        "Code": "200420420847"
-
+        "Unit": "m3"
     }, {
         "Type": "Window",
         "Price": 1224,
-        "Unit": "nr",
-        "Code": "200420420857"
+        "Unit": "nr"
     }, {
         "Type": "Door",
         "Price": 1836,
-        "Unit": "nr",
-        "Code": "200420420867"
-
+        "Unit": "nr"
     }, {
         "Type": "Floor",
         "Price": 80,
-        "Unit": "m2",
-        "Code": "200420420877"
+        "Unit": "m2"
     }
 ]
 
@@ -101,7 +95,10 @@ router.post('/bim360/v1/database', async (req, res, next) => {
                             }));
                         }
             
-                        collection.insertMany(price_Book, (err, docs) => {
+                        let priceBookInfo = price_Book;
+                        const budgetCodeLength = req.body.budgetCodeLength;
+                        priceBookInfo.push({'budgetCodeLength': budgetCodeLength});
+                        collection.insertMany(priceBookInfo, (err, docs) => {
                             if (err) {
                                 console.error(err);
                                 return (res.status(500).json({
@@ -122,7 +119,9 @@ router.post('/bim360/v1/database', async (req, res, next) => {
                             diagnostic: "failed to create collection"
                         }));
                     }
-        
+                    let priceBookInfo = price_Book;
+                    const budgetCodeLength = req.body.budgetCodeLength;
+                    priceBookInfo.push({'budgetCodeLength': budgetCodeLength});
                     collection.insertMany(price_Book, (err, docs) => {
                         if (err) {
                             console.error(err);
@@ -186,7 +185,7 @@ router.post('/bim360/v1/pricebook', async (req, res, next) => {
         }
         const collection = mongoClient.db("Standard_Book").collection("Price_Book");
         // perform actions on the collection object
-        collection.updateOne({ "Code": requestBody.budgetCode }, { $set: { "Price": requestBody.unitPrice } }, function (err, result) {
+        collection.updateOne({ "Type": requestBody.type }, { $set: { "Price": requestBody.unitPrice } }, function (err, result) {
             if (err) {
                 console.error(err);
                 mongoClient.close();

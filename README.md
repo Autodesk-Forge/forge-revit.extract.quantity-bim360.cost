@@ -111,7 +111,8 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 **Setup the app before using the App:**
 1. Make sure the Forge App is integrated with your BIM 360 account, please click **Enable my BIM 360 Account** button and follow the steps to finish the integration. 
 2. Make sure to create **Revi Design Automation** Appbundle & activity, click **Configure** button and create it. Please check the video at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko) for reference. Currently, Revit 2019|2020 are both supported. 
-3. Make sure to initialize the **Price Book** database, open **Price Book** dialog and **Reset**, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined price items.  
+3. Make sure to [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html).
+4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of Budget Code** according to your definition for **Budget Code Template**, and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined price items.
 
 **Operate with App after setup**
 1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity and display you with the budgets info for different elements.
@@ -158,7 +159,7 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
     git config --global http.sslverify "false"
 
 ## Limitation
-- BIM 360 Cost Management module needs to be activated to use this App, due to the current limitation of Cost project setting API, user needs to setup project manually. 
+- BIM 360 Cost Management module needs to be activated to use this App, due to the current limitation of BIM 360 API, user needs to activate **Cost Management** module, and create **Budget Code Template** in cost project setting manually. Please check [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html) for details.
 - Currently Revit Cloud Worksharing is not supported by the Design Automation.  The scenario that this sample demonstrates is applicable only with a file-based Revit model. 
 - Client JavaScript requires modern browser.
 

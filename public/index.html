@@ -299,8 +299,13 @@
             <h4 class="modal-title">Price Book Setting</h4>
           </div>
           <div class="modal-body">
-            <div class="alert alert-warning"><center>Click the "Initialize" button to reset the Price Book database to the default as follow</center></div>
-
+            <div class="alert alert-warning"><center>Provide "Length of budget code" according to your set in "Budget Code Template" and click the "Reset" button to reset the Price Book database to the default as follow</center></div>
+            <div class="row">
+              <div class="col-md-6"><h5>Length of budget code</h5> </div> 
+              <div class="col-md-6">
+                <div><input type="number" min="0" id="budgetCodeLength" value="4"></div>
+              </div>
+            </div>
             <table class="table table-condensed">
               <caption>Sample Price Book</caption>
               <thead>
@@ -308,7 +313,6 @@
                   <th>Type</th>
                   <th>Price</th>
                   <th>Unit</th>
-                  <th>Code</th>
                 </tr>
               </thead>
               <tbody>
@@ -316,25 +320,21 @@
                   <td>Concrete</td>
                   <td>146.00</td>
                   <td>m3</td>
-                  <td>200420420847</td>
                 </tr>
                 <tr>
                   <td>Door</td>
                   <td>1988.00</td>
                   <td>nr</td>
-                  <td>200420420867</td>
                 </tr>
                 <tr>
                   <td>Floor</td>
                   <td>80.00</td>
                   <td>m2</td>
-                  <td>200420420877</td>
                 </tr>
                   <tr>
                     <td>Window</td>
                     <td>1224.00</td>
                     <td>nr</td>
-                    <td>200420420857</td>
                   </tr>
                 </tbody>
             </table>

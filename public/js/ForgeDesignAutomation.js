@@ -20,16 +20,6 @@
 var budgetMgrInstance = null;
 
 ///////////////////////////////////////////////////////////////////////
-/// Generate random color
-///////////////////////////////////////////////////////////////////////
-function random_rgba() {
-  var o = Math.round, r = Math.random, s = 255;
-  return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + 0.5 + ')';
-}
-
-
-
-///////////////////////////////////////////////////////////////////////
 /// Class to handle PriceBook database
 ///////////////////////////////////////////////////////////////////////
 class PriceBook {
@@ -42,7 +32,7 @@ class PriceBook {
     try {
       this.priceInfo = await getDataClientAsync(this.priceBookUrl);
     } catch (err) {
-      console.error(err);
+      console.log(err);
       this.priceInfo = null;
     }
   }
@@ -56,9 +46,19 @@ class PriceBook {
     return null;
   }
 
-  async updatePriceBook(budgetCode, unitPrice) {
+
+  getBudgetCodeLength(){
+    for (let key in this.priceInfo) {
+      if (this.priceInfo[key].budgetCodeLength != null) {
+        return this.priceInfo[key].budgetCodeLength;
+      }
+    }
+    return 0;
+  }
+
+  async updatePriceBook(budgetName, unitPrice) {
     const requestBody = {
-      budgetCode: budgetCode,
+      type: budgetName,
       unitPrice: unitPrice
     };
     try {
@@ -163,12 +163,12 @@ class BudgetTable {
       this.table.data().toArray().forEach((budgetItem) => {
         const item = {
           parentId: null,
-          code: budgetItem[1],
           name: budgetItem[0],
+          code: budgetItem[1],
           quantity: budgetItem[2],
-          description: "",
           unit: budgetItem[3],
-          unitPrice: budgetItem[4].toString()
+          unitPrice: budgetItem[4].toString(),
+          description: "budget description"
         }
         budgetData.push(item);
       })
@@ -176,13 +176,13 @@ class BudgetTable {
     return budgetData;
   }
 
-  updateBudgetsTable(budgetCode, unitPrice, amount) {
+  updateBudgetsTable(budgetName, unitPrice, amount) {
     if (this.table !== null) {
       let tableData = this.table.data();
       const budgetCount = tableData.length;
       // reset the data
       for (let i = 0; i < budgetCount; ++i) {
-        if (tableData[i][1] === budgetCode) {
+        if (tableData[i][0] === budgetName) {
           tableData[i][4] = unitPrice;
           tableData[i][5] = amount;
           break;
@@ -241,7 +241,14 @@ class BudgetManager {
       this.workingItem = null;
     }
     if (status === 'completed' && this.currentModelNode != null) {
-      console.log('Parameters are handled');
+      console.log('Work item is completed');
+
+      const budgetCodeLength = this.priceBook.getBudgetCodeLength();
+      if(budgetCodeLength == 0){
+        alert("budget code length is not set, please set it in price book database first." );
+        this.drawTableCallback();
+        return;
+      }
 
       let bar_labels = [];
       let bar_elementBudget = [];
@@ -256,7 +263,7 @@ class BudgetManager {
         bar_labels.push(elementKey);
         const elementPriceInfo = this.priceBook.getPriceInfoForElement(elementKey);
         if(elementPriceInfo == null){
-          console.error("can not find the price info for element: " + elementKey);
+          console.log("can not find the price info for element: " + elementKey);
           continue;
         }
         const unitPrice = elementPriceInfo['Price'];
@@ -265,8 +272,9 @@ class BudgetManager {
 
         bar_elementBudget.push(elementBudget);
         bar_colors.push(random_rgba());
+        const budgetCode = makeBudgetCode(budgetCodeLength);
 
-        table_dataSet.push([elementKey, elementPriceInfo['Code'], elementCount, elementPriceInfo['Unit'], unitPrice, elementBudget]);
+        table_dataSet.push([elementKey, budgetCode, elementCount, elementPriceInfo['Unit'], unitPrice, elementBudget]);
       }
       this.budgetTable.refreshTable(table_dataSet);
 
@@ -360,11 +368,11 @@ class BudgetManager {
     let budgetLabel = [];
     await Promise.all(
       budgetsRes.map(async (budgetItem) => {
-        const status = await this.priceBook.updatePriceBook(budgetItem['code'], budgetItem['unitPrice']);
+        const status = await this.priceBook.updatePriceBook(budgetItem['name'], budgetItem['unitPrice']);
         if (status) {
           budgetLabel.push(budgetItem['name']);
           budgetArray.push(budgetItem['unitPrice'] * budgetItem['quantity'])
-          this.budgetTable.updateBudgetsTable(budgetItem['code'], budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
+          this.budgetTable.updateBudgetsTable( budgetItem['name'],budgetItem['unitPrice'], budgetItem['unitPrice'] * budgetItem['quantity']);
         }
       })
     )
@@ -484,6 +492,23 @@ async function getUnitPriceFromBIM360Handler() {
   $('#unitPriceFromBIM360Btn')[0].disabled = false;
 }
 
+
+/// helper function to generate random color
+function random_rgba() {
+  var o = Math.round, r = Math.random, s = 255;
+  return 'rgba(' + o(r() * s) + ',' + o(r() * s) + ',' + o(r() * s) + ',' + 0.5 + ')';
+}
+
+/// helper function to generate ramdom budget code
+function makeBudgetCode(length) {
+  var result           = '';
+  var characters       = '0123456789';
+  var charactersLength = characters.length;
+  for ( var i = 0; i < length; i++ ) {
+     result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
 
 // helper function for GET Request
 function getDataClientAsync(requestUrl, requestData=null) {
