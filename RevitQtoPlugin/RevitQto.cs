@@ -184,15 +184,6 @@ namespace RevitQto
 
             }
 
-            //if (countItParams.walls)
-            //{
-            //    FilteredElementCollector elemCollector = new FilteredElementCollector(revitDoc);
-            //    elemCollector.OfClass(typeof(Wall));
-            //    int count = elemCollector.ToElementIds().Count;
-            //    results.walls += count;
-            //    results.total += count;
-            //}
-
             if (countItParams.floors)
             {
                 FilteredElementCollector elemCollector = new FilteredElementCollector(revitDoc);
@@ -208,13 +199,7 @@ namespace RevitQto
 
                     double area = floor.get_Parameter(BuiltInParameter.HOST_AREA_COMPUTED).AsDouble();
                     results.Floor += area;
-
                 }
-
-
-                //int count = elemCollector.ToElementIds().Count;
-                //results.floors += count;
-                //results.total += count;
             }
 
             if (countItParams.doors)
@@ -238,14 +223,9 @@ namespace RevitQto
                 int count = collection.Count;
                 results.Window += count;
             }
-
+            
             results.Concrete /= 35.315;
             results.Floor /= 10.764;
-            //results.Window = 34;
-            //results.Door = 21;
-            //results.Bathroom = 78;
-            //results.Kitchen = 54;
-
             String[] paths = Directory.GetCurrentDirectory().Split('\\');
             results.workitem = paths[paths.Length - 1];
             Console.WriteLine(results.workitem);
