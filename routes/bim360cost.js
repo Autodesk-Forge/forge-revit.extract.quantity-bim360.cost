@@ -21,9 +21,9 @@ const express = require('express');
 const { bim360Cost, database }= require('../config');
 const { OAuth } = require('./common/oauthImp');
 const { apiClientCallAsync } = require('./common/apiclient');
-const MongoClient = require('mongodb').MongoClient;
 
-let router = express.Router();
+const MongoClient = require('mongodb').MongoClient;
+const router = express.Router();
 
 // Sample price book database, you can create complex database per your request
 const price_Book = [

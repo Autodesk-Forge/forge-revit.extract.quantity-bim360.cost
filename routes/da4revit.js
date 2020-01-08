@@ -19,7 +19,6 @@
 
 const express = require('express');
 const bodyParser=require('body-parser');
-const jsonParser = bodyParser.json();
 const { designAutomation }= require('../config');
 const { OAuth } = require('./common/oauthImp');
 const { Utils } = require('./common/da4rimp');
@@ -27,7 +26,8 @@ const { Utils } = require('./common/da4rimp');
 const SOCKET_TOPIC_WORKITEM = 'Workitem-Notification';
 var workitemList = [];
 
-let router = express.Router();
+const router = express.Router();
+const jsonParser = bodyParser.json();
 
 
 ///////////////////////////////////////////////////////////////////////

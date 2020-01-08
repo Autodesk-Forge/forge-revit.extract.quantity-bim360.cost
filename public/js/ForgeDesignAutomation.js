@@ -30,9 +30,9 @@ class PriceBook {
 
   async initPriceBook() {
     try {
-      this.priceInfo = await getDataClientAsync(this.priceBookUrl);
+      this.priceInfo = await apiClientAsync(this.priceBookUrl);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       this.priceInfo = null;
     }
   }
@@ -62,9 +62,9 @@ class PriceBook {
       unitPrice: unitPrice
     };
     try {
-      const priceBookRes = await postDataClientAsync(this.priceBookUrl, requestBody);
+      const priceBookRes = await apiClientAsync(this.priceBookUrl, requestBody, 'post');
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return false;
     }
     return true;
@@ -116,7 +116,7 @@ class BudgetChart {
 
   refreshChart(dataSet) {
     if (this.chart === null) {
-      console.log('Chart is not initialized.');
+      console.error('Chart is not initialized.');
       return;
     }
     this.chart.data = dataSet;
@@ -149,7 +149,7 @@ class BudgetTable {
 
   refreshTable(dataSet = null) {
     if (this.table === null) {
-      console.log('The table is not initialized, please re-check');
+      console.error('The table is not initialized, please re-check');
       return;
     }
     const newData = dataSet ? dataSet : this.table.data();
@@ -263,7 +263,7 @@ class BudgetManager {
         bar_labels.push(elementKey);
         const elementPriceInfo = this.priceBook.getPriceInfoForElement(elementKey);
         if(elementPriceInfo == null){
-          console.log("can not find the price info for element: " + elementKey);
+          console.error("can not find the price info for element: " + elementKey);
           continue;
         }
         const unitPrice = elementPriceInfo['Price'];
@@ -316,7 +316,7 @@ class BudgetManager {
     };
     try {
       const requestUrl = '/api/forge/da4revit/v1/revit/' + encodeURIComponent(this.currentModelNode.storage) + '/qto';
-      this.quantityInfo = await getDataClientAsync(requestUrl, inputJson);
+      this.quantityInfo = await apiClientAsync(requestUrl, inputJson);
       this.workingItem = this.quantityInfo.workItemId;
       return true;
     } catch (err) {
@@ -342,11 +342,10 @@ class BudgetManager {
         cost_container_id: this.costContainerId,
         data: budgetBody
       };
-      const result = await postDataClientAsync(requestUrl, requestBody);
-      console.log(result);
+      const result = await apiClientAsync(requestUrl, requestBody, 'post');
       return true;
     } catch (err) {
-      console.log('Failed to import budgets');
+      console.error('Failed to import budgets');
       return false;
     }
   }
@@ -359,9 +358,9 @@ class BudgetManager {
     let budgetsRes = null;
     const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) + '/budgets';
     try {
-      budgetsRes = await getDataClientAsync(requestUrl);
+      budgetsRes = await apiClientAsync(requestUrl);
     } catch (err) {
-      console.log(err);
+      console.error(err);
       return false;
     }
     let budgetArray = [];
@@ -443,7 +442,7 @@ async function extractQuantityInfoHandler() {
       $('#unitPriceFromBIM360Btn')[0].disabled = false;
     });
     if(!result){
-      console.log('Failed to handle the parameters');
+      console.error('Failed to handle the parameters');
       $('.clsInProgress').hide();
       $('.clsResult').show();
     }
@@ -510,44 +509,27 @@ function makeBudgetCode(length) {
   return result;
 }
 
-// helper function for GET Request
-function getDataClientAsync(requestUrl, requestData=null) {
+// helper function for Request
+function apiClientAsync( requestUrl, requestData=null, requestMethod='get' ) {
   let def = $.Deferred();
+
+  if( requestMethod == 'post' ){
+    requestData = JSON.stringify(requestData);
+  }
 
   jQuery.ajax({
     url: requestUrl,
     contentType: 'application/json',
-    type: 'GET',
+    type: requestMethod,
     dataType: 'json',
     data: requestData,
     success: function (res) {
       def.resolve(res);
     },
     error: function (err) {
-      console.log('get cost info failed:');
+      console.error('request failed:');
       def.reject(err)
     }
   });
-  return def.promise();
-}
-
-// helper function for POST Request
-function postDataClientAsync(requestUrl, requestBody) {
-  let def = $.Deferred();
-
-  jQuery.post({
-    url: requestUrl,
-    contentType: 'application/json',
-    dataType: 'json',
-    data: JSON.stringify(requestBody),
-    success: function (res) {
-      def.resolve(res);
-    },
-    error: function (err) {
-      console.log('post request failed:');
-      def.reject(err)
-    }
-  });
-
   return def.promise();
 }

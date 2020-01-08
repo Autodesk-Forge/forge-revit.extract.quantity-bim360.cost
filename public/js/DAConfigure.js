@@ -19,27 +19,32 @@
 $(document).ready(function () {
     prepareLists();
 
-    $('#clearAccount').click(async ()=>{
+    $('#clearAccount').click(async () => {
         const zipFileName = $('#localBundles').val();
         const fileName = zipFileName.split('.')[0];
         const activityName = fileName + 'Activity';
         const appBundleName = fileName + 'AppBundle';
 
-        if (!confirm('Are you sure you want to delete the AppBundle & Activity for this zip Package?')) 
+        if (!confirm('Are you sure you want to delete the AppBundle & Activity for this zip Package?'))
             return;
 
-        try {
-            updateConfigStatus('deleting_appbundle', appBundleName)
-            await deleteAppBundle(appBundleName);
+        updateConfigStatus('deleting_appbundle', appBundleName)
+        let result = null;
+        result = await deleteAppBundle(appBundleName);
+        if (!result) {
+            console.error('deleting appbundle failed.')
+            updateConfigStatus('deleting_failed', "Failed to delete appbundle {0}".format(appBundleName));
+            return;
+        }
 
-            updateConfigStatus('deleting_activity', activityName)
-            await deleteActivity(activityName );
-
-            updateConfigStatus('deleting_completed',  "{0} & {1}".format(appBundleName, activityName));
-        }catch(err){
-            console.log(err)
-            updateConfigStatus('deleting_failed', "{0} & {1}".format(appBundleName, activityName) )
-        }        
+        updateConfigStatus('deleting_activity', activityName)
+        result = await deleteActivity(activityName);
+        if (!result) {
+            console.error('deleting activity failed.')
+            updateConfigStatus('deleting_failed', "Failed to delete activity {0}".format(activityName));
+            return;
+        }
+        updateConfigStatus('deleting_completed', "{0} & {1}".format(appBundleName, activityName));
     });
     $('#defineActivityShow').click(defineActivityModal);
     $('#createAppBundleActivity').click(createAppBundleActivity);
@@ -64,6 +69,7 @@ function prepareLists() {
     list('localBundles', '/api/forge/appbundles');
 }
 
+
 function list(control, endpoint) {
     $('#' + control).find('option').remove().end();
     jQuery.ajax({
@@ -78,150 +84,120 @@ function list(control, endpoint) {
     });
 }
 
-
-async function resetPriceBook(){
+// reset price book database
+async function resetPriceBook() {
     $('.resetingPriceBook').show();
     $('#resetPriceBook').hide();
 
     const budgetCodeLength = parseInt($('#budgetCodeLength').val());
-    try{
+    try {
         await initPriceBook(budgetCodeLength);
-    }catch(err){
+    } catch (err) {
         console.error(err);
     }
     $('.resetingPriceBook').hide();
     $('#resetPriceBook').show();
-
 }
 
+// delete appbundle
 async function deleteAppBundle( appBundleName ) {
-    let def = $.Deferred();
-
-    $.ajax({
-        url: '/api/forge/designautomation/appbundles/' + encodeURIComponent(appBundleName),
-        type: "delete",
-        dataType: "json",
-        success: function (res) {
-            def.resolve(res);
-        },
-        error: function (err) {
-            def.reject(err);
-        }
-    });
-    return def.promise();
+    const requestUrl = '/api/forge/designautomation/appbundles/' + encodeURIComponent(appBundleName);
+    try {
+        await apiClientAsync(requestUrl, null, 'delete');
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+    return true;
 }
 
+// delete activity
 async function deleteActivity( activityName) {
-    let def = $.Deferred();
-
-    $.ajax({
-        url: '/api/forge/designautomation/activities/' + encodeURIComponent(activityName),
-        type: "delete",
-        dataType: "json",
-        success: function (res) {
-            def.resolve(res);
-        },
-        error: function (err) {
-            def.reject(err);
-        }
-    });
-
-    return def.promise();
+    const requestUrl = '/api/forge/designautomation/activities/' + encodeURIComponent(activityName);
+    try {
+        await apiClientAsync(requestUrl, null, 'delete');
+    } catch (err) {
+        console.error(err);
+        return false;
+    }
+    return true;
 }
 
 function defineActivityModal() {
     $("#defineActivityModal").modal();
 }
 
+// event handler for button 'createAppBundleActivity'
 async function createAppBundleActivity() {
     const zipFileName = $('#localBundles').val();
     const fileName = zipFileName.split('.')[0];
 
-    try{
-        updateConfigStatus('creating_appbundle', fileName+"AppBundle")
-        const appBundle = await createAppBundle( fileName );
-
-        updateConfigStatus('creating_activity', fileName+"Activity")
-        const activity = await createActivity(fileName);
-
-        updateConfigStatus('creating_completed', "{0}AppBundle & {1}Activity".format(fileName, fileName)  )
-    }
-    catch(err){
-        updateConfigStatus('creating_failed', "{0}AppBundle & {1}Activity".format(fileName, fileName)  )
-        console.log('Failed to create AppBundle and Activity.');
+    updateConfigStatus('creating_appbundle', fileName + "AppBundle")
+    const appBundle = await createAppBundle(fileName);
+    if (appBundle == null) {
+        updateConfigStatus('creating_failed', "Failed to create AppBundle {0}".format(fileName))
+        console.error('Failed to create AppBundle.');
         return;
     }
+
+    updateConfigStatus('creating_activity', fileName + "Activity")
+    const activity = await createActivity(fileName);
+    if (activity == null) {
+        updateConfigStatus('creating_failed', "{0}AppBundle & {1}Activity".format(fileName, fileName))
+        console.error('Failed to create AppBundle and Activity.');
+        return;
+    }
+
+    updateConfigStatus('creating_completed', "{0}AppBundle & {1}Activity".format(fileName, fileName))
 }
 
 
-function initPriceBook( budgetCodeLength ){
-    let def = $.Deferred();
-
-    jQuery.ajax({
-        url: 'api/forge/bim360/v1/database',
-        method: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify({
-            budgetCodeLength: budgetCodeLength
-        }),
-        success: function (res) {
-            def.resolve(res);
-        },
-        error: function (err) {
-            def.reject(err);
-          }    
-    });
-    return def.promise();
+// init the price book database
+async function initPriceBook( budgetCodeLength ){
+    const requestUrl = 'api/forge/bim360/v1/database';
+    const requestBody = {
+        budgetCodeLength: budgetCodeLength
+    };
+    try {
+        return await apiClientAsync(requestUrl, requestBody, 'post');
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
 }
 
+// create appbundle
+async function createAppBundle(fileName) {
+    const requestUrl = 'api/forge/designautomation/appbundles';
+    const requestBody = {
+        fileName: fileName,
+        engine: $('#engines').val()
+    };
 
-function createAppBundle(fileName) {
-    let def = $.Deferred();
-
-    jQuery.ajax({
-        url: 'api/forge/designautomation/appbundles',
-        method: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify({
-            fileName: fileName,
-            engine: $('#engines').val()
-        }),
-        success: function (res) {
-            def.resolve(res);
-        },
-        error: function (err) {
-            def.reject(err);
-          }    
-    });
-    return def.promise();
+    try {
+        return await apiClientAsync(requestUrl, requestBody, 'post');
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
 }
 
-function createActivity(fileName) {
-    let def = $.Deferred();
-
-    jQuery.ajax({
-        url: 'api/forge/designautomation/activities',
-        method: 'POST',
-        contentType: 'application/json',
-        dataType: 'json',
-        data: JSON.stringify({
-            fileName: fileName,
-            engine: $('#engines').val()
-        }),
-        success: function (res) {
-            def.resolve(res);
-        },
-        error: function (err) {
-            console.log(err)
-            def.reject(err);
-          }   
-    });
-    return def.promise();
+// create activity
+async function createActivity(fileName) {
+    const requestUrl = 'api/forge/designautomation/activities';
+    const requestBody = {
+        fileName: fileName,
+        engine: $('#engines').val()
+    };
+    try {
+        return await apiClientAsync(requestUrl, requestBody, 'post');
+    } catch (err) {
+        console.error(err);
+        return null;
+    }
 }
 
-
+// udpate status bar
 function updateConfigStatus(status, info = '') {
     let statusText = document.getElementById('configText');
     let upgradeBtnElm = document.getElementById('createAppBundleActivity');
@@ -281,7 +257,7 @@ function updateConfigStatus(status, info = '') {
 }
 
 
-
+// set progress
 function setProgress(percent, progressbarId ) {
     let progressBar = document.getElementById(progressbarId);
     progressBar.style = "width: " + percent + "%;";
