@@ -6,7 +6,7 @@
 [![Data-Management](https://img.shields.io/badge/Data%20Management-v1-green.svg)](http://developer.autodesk.com/)
 [![Design-Automation](https://img.shields.io/badge/Design%20Automation-v3-green.svg)](http://developer.autodesk.com/)
 [![Forge-Viewer](https://img.shields.io/badge/Forge%20Viewer-v7-green.svg)](http://developer.autodesk.com/)
-[![Cost Management](https://img.shields.io/badge/Cost%20Management-beta-green.svg)](http://developer.autodesk.com/)
+[![Cost Management](https://img.shields.io/badge/Cost%20Management-v1%20beta-green.svg)](http://developer.autodesk.com/)
 
 
 ![Windows](https://img.shields.io/badge/Plugins-Windows-lightgrey.svg)
@@ -18,8 +18,8 @@
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 # Description
-This sample demonstrates generating quantity and budgets from Revit model directly, and export to BIM360 Cost module as new Budgets. 
- 
+This sample demonstrates extracting quantity information of Revit element directly from model under BIM 360 using design automation service, and calculate the budget for each element based on the quantity and price which is stored in database. Also, the sample provides the ability to import the generated budgets directly into BIM 360 Cost Management module, and synchronize the Unit Price for each element between Cost module and Price Book database. 
+
 
 # Thumbnail
 ![thumbnail](/thumbnail.png)
@@ -32,7 +32,7 @@ This sample demonstrates generating quantity and budgets from Revit model direct
 
 # Main Parts of The Work
 1. Create a Revit Plugin to be used within AppBundle of Design Automation for Revit. Please check [PlugIn](./RevitQtoPlugin/) 
-2. Create your App, upload the AppBundle, define your Activity and test the workitem with the Postman collection under [Postman Collection](./PostmanCollection/), or you can refer ([https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)) and simply use the `Configure` button in the Web Application to create the Appbundle & Activity. 
+2. Create your App, upload the AppBundle, define your Activity, please refer ([https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko)) and simply use the `Configure` button in the Web Application to create the Appbundle & Activity. Or you can use Postman to do that according to [this tutorial](https://forge.autodesk.com/en/docs/design-automation/v3/tutorials/revit/) and [repo](https://github.com/Autodesk-Forge/forge-tutorial-postman)  
 3. Create the Web App to call the workitem.
 
 # Web App Setup
@@ -40,11 +40,11 @@ This sample demonstrates generating quantity and budgets from Revit model direct
 ## Prerequisites
 
 1. **Forge Account**: Learn how to create a Forge Account, activate subscription and create an app at [this tutorial](http://learnforge.autodesk.io/#/account/). 
-2. **Visual Code**: Visual Code (Windows or MacOS).
-3. **ngrok**: Routing tool, [download here](https://ngrok.com/)
-4. **Revit 2020**: required to compile changes into the plugin
-5. **JavaScript ES6** syntax for server-side.
-6. **JavaScript** basic knowledge with **jQuery**
+2. **BIM 360 Account**: must be an Account Admin to add the app custom integration, or invited by an admin of a BIM 360 Account. [Learn about provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps). 
+3. **BIM 360 Cost Management**: Create BIM 360 project, activate Cost Management module, setup project to create **Budget Code Template** for Cost Management according to [the guide](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html)
+4. **Visual Code**: Visual Code (Windows or MacOS).
+5. **Revit 2020** & **Visual Studio 2017**: required to compile changes into the plugin
+6. **ngrok**: Routing tool, [download here](https://ngrok.com/)
 7. **MongoDB**: noSQL database, learn more. Or use a online version via Mongo Altas (this is used on this sample)
 
 
@@ -104,20 +104,20 @@ Windows (use **Node.js command line** from Start menu)
     set OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net>>"
     npm start
 
-### Using the app
+## Using the app
 
 Open the browser: [http://localhost:3000](http://localhost:3000).
 
 **Setup the app before using the App:**
 1. Make sure the Forge App is integrated with your BIM 360 account, please click **Enable my BIM 360 Account** button and follow the steps to finish the integration. 
 2. Make sure to create **Revi Design Automation** Appbundle & activity, click **Configure** button and create it. Please check the video at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko) for reference. Currently, Revit 2019|2020 are both supported. 
-3. Make sure to [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html).
-4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of Budget Code** according to your definition for **Budget Code Template**, and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined price items.
+3. Make sure to [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html), a **Budget Code Template** must be created before adding or importing budget items.
+4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of budget code** according to your definition for **Budget Code Template**, and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined sample price items.
 
 **Operate with App after setup**
-1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity and display you with the budgets info for different elements.
-2. Clike `Update to BIM360`, it will import the budgets into BIM 360 Cost Management module.
-3. Open `BIM 360 Cost Management` module, check the budgets, and update the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the price book and refresh budget table|chart based on the updated **Unit Price** from BIM360.
+1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity info for each Revit element, and calculate the budget based on the quantity and price which is stored in database as Price Book, then display you the result in table|chart.
+2. Clike `Update to BIM360`, it will import the generated budgets directly into BIM 360 Cost Management module.
+3. Open `BIM 360 Cost Management` module, check the budgets, and update the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the Price Book in the database and refresh budget table|chart based on the updated **Unit Price** from BIM360.
 
 ## Deployment
 
@@ -137,9 +137,12 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
 
 **Documentation:**
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar. 
-- [Design Automation API](https://forge.autodesk.com/en/docs/design-automation/v3/developers_guide/overview/)
-- [BIM 360 API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
 - [Data Management API](httqqqps://developer.autodesk.com/en/docs/data/v2/overview/)
+- [BIM 360 API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
+- [BIM 360 Cost Management API](wait-to-be-released)
+- [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html)
+- [Design Automation API](https://forge.autodesk.com/en/docs/design-automation/v3/developers_guide/overview/)
+- [Design Automation for Revit tutorial](https://forge.autodesk.com/en/docs/design-automation/v3/tutorials/revit/)
 
 **Desktop APIs:**
 - [Revit](https://knowledge.autodesk.com/support/revit-products/learn-explore/caas/simplecontent/content/my-first-revit-plug-overview.html)
@@ -147,6 +150,8 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
 - [MongoDB for Node.js#](https://docs.mongodb.com/ecosystem/drivers/node/) driver
 - [Mongo Altas](https://www.mongodb.com/cloud/atlas) Database-as-a-Service for MongoDB
 
+**Tools**
+- [Design Automation Postman collection](https://github.com/Autodesk-Forge/forge-tutorial-postman)
 
 ## Tips & Tricks
 - The sample use the local endpoint to accept the outputJson file which is generated by the Revit cloud engine, this help improve the performance.
