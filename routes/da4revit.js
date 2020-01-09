@@ -48,7 +48,7 @@ router.use(async (req, res, next) => {
 ///////////////////////////////////////////////////////////////////////
 /// Export Qto info to Json file from Revit
 ///////////////////////////////////////////////////////////////////////
-router.get('/da4revit/v1/revit/:version_storage/qto', async (req, res, next) => {
+router.get('/da4revit/revit/:version_storage/qto', async (req, res, next) => {
     const inputJson = req.query;
     const inputRvtUrl = (req.params.version_storage);
     if (inputJson === '' || inputRvtUrl === '') {

@@ -154,7 +154,7 @@ async function createAppBundleActivity() {
 
 // init the price book database
 async function initPriceBook( budgetCodeLength ){
-    const requestUrl = 'api/forge/bim360/v1/database';
+    const requestUrl = 'api/forge/pricebook/database';
     const requestBody = {
         budgetCodeLength: budgetCodeLength
     };

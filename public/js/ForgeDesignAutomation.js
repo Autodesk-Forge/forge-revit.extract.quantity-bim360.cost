@@ -24,7 +24,7 @@ var budgetMgrInstance = null;
 ///////////////////////////////////////////////////////////////////////
 class PriceBook {
   constructor() {
-    this.priceBookUrl = '/api/forge/bim360/v1/pricebook';
+    this.priceBookUrl = '/api/forge/pricebook/items';
     this.priceInfo = [];
   }
 
@@ -315,7 +315,7 @@ class BudgetManager {
       windows: true
     };
     try {
-      const requestUrl = '/api/forge/da4revit/v1/revit/' + encodeURIComponent(this.currentModelNode.storage) + '/qto';
+      const requestUrl = '/api/forge/da4revit/revit/' + encodeURIComponent(this.currentModelNode.storage) + '/qto';
       this.quantityInfo = await apiClientAsync(requestUrl, inputJson);
       this.workingItem = this.quantityInfo.workItemId;
       return true;
@@ -337,7 +337,7 @@ class BudgetManager {
       append: false
     }
     try {
-      const requestUrl = '/api/forge/da4revit/v1/bim360/budgets';
+      const requestUrl = '/api/forge/da4revit/bim360/budgets';
       const requestBody = {
         cost_container_id: this.costContainerId,
         data: budgetBody
@@ -356,7 +356,7 @@ class BudgetManager {
       return false;
 
     let budgetsRes = null;
-    const requestUrl = '/api/forge/bim360/v1/projects/' + encodeURIComponent(this.costContainerId) + '/budgets';
+    const requestUrl = '/api/forge/bim360/projects/' + encodeURIComponent(this.costContainerId) + '/budgets';
     try {
       budgetsRes = await apiClientAsync(requestUrl);
     } catch (err) {

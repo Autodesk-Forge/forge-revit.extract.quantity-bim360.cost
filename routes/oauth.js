@@ -36,12 +36,12 @@ router.get('/callback/oauth', async (req, res, next) => {
     }
 });
 
-router.get('/oauth/v1/clientid', (req, res) =>{
+router.get('/oauth/clientid', (req, res) =>{
     res.status(200).end( JSON.stringify({id : config.credentials.client_id}) );
 });
 
 
-router.get('/oauth/v1/url', (req, res) => {
+router.get('/oauth/url', (req, res) => {
     const url =
         'https://developer.api.autodesk.com' +
         '/authentication/v1/authorize?response_type=code' +
@@ -51,13 +51,13 @@ router.get('/oauth/v1/url', (req, res) => {
     res.end(url);
 });
 
-router.get('/oauth/v1/signout', (req, res) => {
+router.get('/oauth/signout', (req, res) => {
     req.session = null;
     res.redirect('/');
 });
 
 // Endpoint to return a 2-legged access token
-router.get('/oauth/v1/token', async (req, res, next) => {
+router.get('/oauth/token', async (req, res, next) => {
     const oauth = new OAuth(req.session);
     if (!oauth.isAuthorized()) {
         res.status(401).end();

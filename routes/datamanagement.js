@@ -37,7 +37,7 @@ const {
 const express = require('express');
 let router = express.Router();
 
-router.get('/datamanagement/v1', async (req, res) => {
+router.get('/datamanagement', async (req, res) => {
     // The id querystring parameter contains what was selected on the UI tree, make sure it's valid
     const href = decodeURIComponent(req.query.id);
     if (href === '') {
@@ -82,7 +82,7 @@ router.get('/datamanagement/v1', async (req, res) => {
 });
 
 // delete a folder
-router.delete('/datamanagement/v1/folder/:folder_url', async (req, res )=>{
+router.delete('/datamanagement/folder/:folder_url', async (req, res )=>{
     const href = req.params.folder_url;
     if (href === '' || href === null) {
         res.status(400).end('the folder url is not specified');
@@ -108,7 +108,7 @@ router.delete('/datamanagement/v1/folder/:folder_url', async (req, res )=>{
 })
 
 // create a subfolder
-router.post('/datamanagement/v1/folder', async (req, res) => {
+router.post('/datamanagement/folder', async (req, res) => {
     const href = req.body.id;
     const folderName = req.body.name;
     if (href === '' || folderName === '') {
@@ -164,7 +164,7 @@ router.post('/datamanagement/v1/folder', async (req, res) => {
 // POST /api/forge/oss/objects - uploads new object to given bucket.
 // Request body must be structured as 'form-data' dictionary
 // with the uploaded file under "fileToUpload" key, and the bucket name under "bucketKey".
-router.post('/datamanagement/v1/oss/object', multer({ dest: 'uploads/' }).single('fileToUpload'), async (req, res, next) => {
+router.post('/datamanagement/oss/object', multer({ dest: 'uploads/' }).single('fileToUpload'), async (req, res, next) => {
     fs.readFile(req.file.path, async (err, data) => {
         if (err) {
             next(err);
