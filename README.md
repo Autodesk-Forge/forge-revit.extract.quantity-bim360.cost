@@ -72,9 +72,10 @@ Run `ngrok http 3000` to create a tunnel to your local machine, then copy the ad
 2. Create a free version of cluster, use the default setting, but name it as `forgesample` for example.
 3. Whitelist the IP address to access the database, [see this tutorial](https://docs.atlas.mongodb.com/security-whitelist/). If the sample is running on Heroku, you'll need to open to all (IP `0.0.0.0/0`). 
 4. Create a new user to access the database, please keep the **user name** and **password** to be used in the following connection. 
+5. At this point, you can click **Connect** button to check your **connection string** to the MongoDB cluster, the connection string should be in the form like 
+`mongodb+srv://<username>:<password>@<clustername>-<njl8m>.mongodb.net`. 
 
-At this point the connection string to the MongoDB server should be in the form of 
-`mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net`. please set environment variable `OAUTH_DATABASE` with this url. [Learn more here](https://docs.mongodb.com/manual/reference/connection-string/)
+Please set environment variable `OAUTH_DATABASE` with your url. [Learn more here](https://docs.mongodb.com/manual/reference/connection-string/)
 
 There are several tools to view your database, [Robo 3T](https://robomongo.org/) (formerly Robomongo) is a free lightweight GUI that can be used. When it opens, follow instructions [here](https://www.datduh.com/blog/2017/7/26/how-to-connect-to-mongodb-atlas-using-robo-3t-robomongo) to connect to MongoDB Atlas.
 
@@ -90,7 +91,7 @@ Mac OSX/Linux (Terminal)
     export FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     export FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     export FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
-    export OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net>>"
+    export OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-<njl8m>.mongodb.net>>"
 
     npm start
 
@@ -101,7 +102,7 @@ Windows (use **Node.js command line** from Start menu)
     set FORGE_CLIENT_SECRET=<<YOUR CLIENT SECRET>>
     set FORGE_CALLBACK_URL=<<YOUR CALLBACK URL>>
     set FORGE_WEBHOOK_URL=<<YOUR DESIGN AUTOMATION FOR REVIT CALLBACK URL>>
-    set OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-njl8m.mongodb.net>>"
+    set OAUTH_DATABASE="mongodb+srv://<username>:<password>@<clustername>-<njl8m>.mongodb.net>>"
     npm start
 
 ## Using the app

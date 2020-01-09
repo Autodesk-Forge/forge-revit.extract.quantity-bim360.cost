@@ -90,11 +90,12 @@ async function resetPriceBook() {
     $('#resetPriceBook').hide();
 
     const budgetCodeLength = parseInt($('#budgetCodeLength').val());
-    try {
-        await initPriceBook(budgetCodeLength);
-    } catch (err) {
+    const pbResult = await initPriceBook(budgetCodeLength);
+    if( pbResult == null ) {
         console.error(err);
+        alert('Failed to reset price book database');
     }
+    alert('Price book database is sucessfully reset.');
     $('.resetingPriceBook').hide();
     $('#resetPriceBook').show();
 }

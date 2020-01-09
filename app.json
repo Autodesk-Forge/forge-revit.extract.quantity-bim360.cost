@@ -25,8 +25,8 @@
             "value": "http://<<YOUR HEROKU APP NAME HERE>>.herokuapp.com"
         },
         "OAUTH_DATABASE": {
-            "description": "MongoDB connection string, e.g frmm mLab",
-            "value": "mongodb://user:password@ds1234.mlab.com:6789/databaseName"
+            "description": "MongoDB connection string, e.g from MongoDB Atlas",
+            "value": "mongodb+srv://<username>:<password>@<clustername>-<njl8m>.mongodb.net"
         }
     },
     "website": "https://developer.autodesk.com/",
