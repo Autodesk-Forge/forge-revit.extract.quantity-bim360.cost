@@ -111,9 +111,9 @@ Open the browser: [http://localhost:3000](http://localhost:3000).
 
 **Setup the app before using the App:**
 1. Make sure the Forge App is integrated with your BIM 360 account, please click **Enable my BIM 360 Account** button and follow the steps to finish the integration. 
-2. Make sure to create **Revi Design Automation** Appbundle & activity, click **Configure** button and create it. Please check the video at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko) for reference. Currently, Revit 2019|2020 are both supported. 
+2. Make sure to create **Revi Design Automation** Appbundle & activity, click **Configure** button, select local **AppBundle** and **Engine** to create. Please check the video at [https://youtu.be/1NCeH7acIko](https://youtu.be/1NCeH7acIko) for reference. Currently, Revit 2019|2020 engines are both supported. 
 3. Make sure to [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html), a **Budget Code Template** must be created before adding or importing budget items.
-4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of budget code** according to your definition for **Budget Code Template**, and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined sample price items.
+4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of budget code** according to your definition for **Budget Code Template**(the digits length of your budget code), and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined sample price items.
 
 **Operate with App after setup**
 1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity info for each Revit element, and calculate the budget based on the quantity and price which is stored in database as Price Book, then display you the result in table|chart.
@@ -166,6 +166,7 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
 
 ## Limitation
 - BIM 360 Cost Management module needs to be activated to use this App, due to the current limitation of BIM 360 API, user needs to activate **Cost Management** module, and create **Budget Code Template** in cost project setting manually. Please check [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html) for details.
+- **Budget Code** is required to create a budget. Currently, a random budget code with specified digits length(set in **Price Book**) will be automatically generated for each budget. 
 - Currently Revit Cloud Worksharing is not supported by the Design Automation.  The scenario that this sample demonstrates is applicable only with a file-based Revit model. 
 - Client JavaScript requires modern browser.
 
