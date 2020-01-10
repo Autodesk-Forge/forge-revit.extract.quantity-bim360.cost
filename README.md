@@ -18,14 +18,16 @@
 [![MIT](https://img.shields.io/badge/License-MIT-blue.svg)](http://opensource.org/licenses/MIT)
 
 # Description
-This sample demonstrates extracting quantity information of Revit element directly from model under BIM 360 using design automation service, and calculate the budget for each element based on the quantity and price which is stored in database. Also, the sample provides the ability to import the generated budgets directly into BIM 360 Cost Management module, and synchronize the Unit Price for each element between Cost module and Price Book database. 
+This sample demonstrates extracting quantity information of Revit element directly from model under BIM 360 using design automation service, and calculate the budget for each element based on the quantity and price which is stored in database. 
+The sample also provides the ability to import the generated budgets directly into BIM 360 Cost Management module, and synchronize the Unit Price for each element between Cost module and Price Book database. 
 
 
 # Thumbnail
 ![thumbnail](/thumbnail.png)
 
 # Demonstration
-[![https://youtu.be/Q7kyh5A__mg](http://img.youtube.com/vi/Q7kyh5A__mg/0.jpg)](http://www.youtube.com/watch?v=Q7kyh5A__mg "Generate Quantity and Budget from Revit model directly, and export to BIM360 Cost module as new Budgets")
+[![https://youtu.be/zJKvatl3zek](http://img.youtube.com/vi/zJKvatl3zek/0.jpg)](https://youtu.be/zJKvatl3zek "Generate Quantity and Budget from Revit model directly, and export to BIM360 Cost module as new Budgets")
+
 
 # Live Demo
 [https://revit-qto-bim360.herokuapp.com/](https://revit-qto-bim360.herokuapp.com/)
