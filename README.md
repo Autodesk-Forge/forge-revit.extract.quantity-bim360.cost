@@ -111,13 +111,15 @@ Windows (use **Node.js command line** from Start menu)
 
 Open the browser: [http://localhost:3000](http://localhost:3000).
 
-**Setup the app before using the App:**
+**Please watch the [Video](https://youtu.be/zJKvatl3zek) for the detail setup and usage, or follow the steps:**
+
+- **Setup the app before using the App**
 1. Make sure the Forge App is integrated with your BIM 360 account, please click **Enable my BIM 360 Account** button and follow the steps to finish the integration. 
 2. Make sure to create **Revi Design Automation** Appbundle & activity, click **Configure** button, select local **AppBundle** and **Engine** to create. Currently, Revit 2019|2020 engines are both supported. 
 3. Make sure to [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html), a **Budget Code Template** must be created before adding or importing budget items.
 4. Make sure to initialize the **Price Book** database, open **Price Book** dialog, set **Length of budget code** according to your definition for **Budget Code Template**(the digits length of your budget code), and click **Reset** button, it will create **Standard_Book**(database), **Price_Book**(collection), with a couple of predefined sample price items.
 
-**Operate with App after setup**
+- **Operate with App after setup**
 1. Select Revit file version in BIM360 Hub to view the Model, Click `Extract quantity from the model` button, it will extract the quantity info for each Revit element, and calculate the budget based on the quantity and price which is stored in database as Price Book, then display you the result in table|chart.
 2. Clike `Update to BIM360`, it will import the generated budgets directly into BIM 360 Cost Management module.
 3. Open `BIM 360 Cost Management` module, check the budgets, and update the `Unit Cost` for any budget item, then click `Get Unit Price from BIM360` button, it will update the Price Book in the database and refresh budget table|chart based on the updated **Unit Price** from BIM360.
