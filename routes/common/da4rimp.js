@@ -35,11 +35,11 @@ class Utils {
 	}
 
 	/// <summary>
-	/// Prefix for AppBundles and Activities
+	/// Prefix for AppBundles and Activities. This value may come from an environment variable
 	/// </summary>
 	static get NickName() {
-		if( config.designAutomation && config.designAutomation.nickname ){
-			return (config.designAutomation.nickname);
+		if( config.designAutomation && config.designAutomation.nick_name ){
+			return (config.designAutomation.nick_name);
 		}else{
 			return (config.credentials.client_id);
 		}
@@ -49,11 +49,22 @@ class Utils {
 	/// Alias for the app (e.g. DEV, STG, PROD). This value may come from an environment variable
 	/// </summary>
 	static get Alias() {
-		return ('dev');
+		if( config.designAutomation && config.designAutomation.alias ){
+			return (config.designAutomation.alias);
+		}else{
+			return ('dev');
+		}
 	}
 
-	static get ActivityName(){
-		return ('RevitQtoActivity');
+	/// <summary>
+	/// Activity name. This value may come from an environment variable
+	/// </summary>
+	static get ActivityName() {
+		if( config.designAutomation && config.designAutomation.activity_name ){
+			return (config.designAutomation.activity_name);
+		}else{
+			return ('RevitQtoActivity');
+		}
 	}
 
 	/// <summary>

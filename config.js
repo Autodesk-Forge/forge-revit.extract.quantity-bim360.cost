@@ -51,13 +51,15 @@ module.exports = {
     },
     bim360Cost:{
         URL:{
-
             IMPORT_BUDGETS_URL: "https://developer.api.autodesk.com/cost/v1/containers/{0}/budgets:import",
             BUDGETS_RUL: "https://developer.api.autodesk.com/cost/v1/containers/{0}/budgets" 
         }
     },
     designAutomation:{
         app_base_domain: process.env.FORGE_WEBHOOK_URL,
-        nickname:     process.env.DESIGN_AUTOMATION_NICKNAME,
+        // the following environment variables are only required to define if you want to use your own predefined activity
+        alias: process.env.DESIGN_AUTOMATION_ALIAS,
+        nick_name:     process.env.DESIGN_AUTOMATION_NICKNAME,
+        activity_name:     process.env.DESIGN_AUTOMATION_ACTIVITY_NAME
     }
 };
