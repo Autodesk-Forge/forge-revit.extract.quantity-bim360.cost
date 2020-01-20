@@ -1,7 +1,7 @@
 {
     "name": "forge-revit.extract.quantity-bim360.cost",
     "description": "A sample showing how to extract quantity from Revit and create budget within BIM360",
-    "repository": "https://github.com/JohnOnSoftware/forge-revit.extract.quantity-bim360.cost",
+    "repository": "https://github.com/Autodesk-Forge/forge-revit.extract.quantity-bim360.cost",
     "logo": "https://avatars0.githubusercontent.com/u/8017462?v=3&s=200",
     "keywords": [
         "autodesk",
