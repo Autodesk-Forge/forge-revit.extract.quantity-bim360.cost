@@ -144,7 +144,7 @@ Watch [this video](https://www.youtube.com/watch?v=Oqa9O20Gj0c) on how deploy sa
 - This sample is based on [Learn Forge Tutorial](https://github.com/Autodesk-Forge/learn.forge.viewhubmodels/tree/nodejs), please check details there about the basic framework if you are not familar. 
 - [Data Management API](httqqqps://developer.autodesk.com/en/docs/data/v2/overview/)
 - [BIM 360 API](https://developer.autodesk.com/en/docs/bim360/v1/overview/) and [App Provisioning](https://forge.autodesk.com/blog/bim-360-docs-provisioning-forge-apps)
-- [BIM 360 Cost Management API](wait-to-be-released)
+- [BIM 360 Cost Management API](https://forge.autodesk.com/en/docs/bim360/v1/overview/field-guide/cost-management/)
 - [Create BIM360 project, activate Cost Management module, setup project for Cost Management](https://help.autodesk.com/view/BIM360D/ENU/?guid=BIM360D_Cost_Management_getting_started_with_cost_management_html)
 - [Design Automation API](https://forge.autodesk.com/en/docs/design-automation/v3/developers_guide/overview/)
 - [Design Automation for Revit tutorial](https://forge.autodesk.com/en/docs/design-automation/v3/tutorials/revit/)
