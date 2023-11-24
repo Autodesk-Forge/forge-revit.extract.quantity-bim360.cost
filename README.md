@@ -1,3 +1,7 @@
+<h1>DEPRECATED</h1>
+This repository has been deprecated and all its content was moved to the new one located here https://github.com/autodesk-platform-services/aps-extract-revit-quantity-cost
+
+
 # forge-revit.extract.quantity-bim360.cost
 
 [![Node.js](https://img.shields.io/badge/Node.js-8.0-blue.svg)](https://nodejs.org/)
